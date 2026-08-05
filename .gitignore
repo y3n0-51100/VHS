@@ -1,0 +1,8 @@
+# Sauvegardes exportées par la régie — elles peuvent contenir des photos
+# encodées et n'ont rien à faire dans l'historique.
+archives-familiales*.json
+
+# Systèmes
+.DS_Store
+Thumbs.db
+desktop.ini
