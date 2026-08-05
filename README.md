@@ -8,7 +8,7 @@ dans un bloc de données au bas du fichier du site.
 
 | Fichier | Rôle |
 | --- | --- |
-| `Archives Familiales v2.dc.html` | Le site : frise par année, filtres, trombinoscope, notice, lecteur YouTube. |
+| `index.html` | Le site : frise par année, filtres, trombinoscope, notice, lecteur YouTube. |
 | `Regie.dc.html` | La page d'administration : saisie des bandes, des prénoms, des réglages et des textes. |
 | `support.js` | Le moteur de rendu (dc-runtime). Ne pas modifier. |
 | `_ds/industry-…/` | Le système de design importé. Ne pas modifier. |
@@ -27,7 +27,27 @@ N'importe quel serveur statique fait l'affaire :
 npx serve .
 ```
 
-Puis ouvrez `Archives Familiales v2.dc.html`.
+Puis ouvrez `http://localhost:3000/`.
+
+## En ligne
+
+Le dépôt est publié tel quel par Cloudflare Pages — aucune étape de construction,
+aucun dossier de sortie : le contenu de la racine *est* le site.
+
+| | |
+| --- | --- |
+| Le site | <https://vhs-schaff.pages.dev/> |
+| La régie | <https://vhs-schaff.pages.dev/Regie.dc.html> |
+
+Chaque poussée sur `main` déclenche un déploiement. C'est pourquoi le fichier du
+site s'appelle `index.html`, en minuscules : c'est ce nom-là que Cloudflare sert à
+la racine du domaine.
+
+Une adresse en `.pages.dev` est publique : elle n'est pas listée, mais quiconque
+la connaît l'ouvre. Le mot de passe du site est un loquet côté navigateur, pas une
+serrure (voir plus bas). `robots.txt` et `_headers` demandent aux moteurs de
+recherche de ne pas indexer le site — c'est une politesse qu'ils respectent, pas
+une barrière.
 
 ## Les codes
 
@@ -54,7 +74,7 @@ voient encore rien.
 ## Publier
 
 1. **Sauvegarde › Fabriquer le bloc**, puis **Copier**.
-2. Ouvrez `Archives Familiales v2.dc.html` dans un éditeur.
+2. Ouvrez `index.html` dans un éditeur.
 3. Remplacez tout ce qui va du marqueur `DONNEES-DEBUT` au marqueur `DONNEES-FIN`,
    marqueurs compris, par ce que vous venez de copier.
 4. Commitez, poussez.
