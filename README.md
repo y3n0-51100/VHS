@@ -123,8 +123,11 @@ Trois réglages à faire une fois, que je ne peux pas faire à votre place :
    `https://vhs-schaff.pages.dev`, et ajoutez la même adresse dans
    *Redirect URLs*.
 
-Tant que ce n'est pas fait, le bouton « Se connecter avec Google » renvoie une
-erreur — le reste du site fonctionne normalement.
+Tant que ce n'est pas fait, les pages le voient — elles interrogent
+`/auth/v1/settings`, qui liste les fournisseurs actifs — et se taisent : le site
+n'affiche pas de bouton mort, et la régie affiche ces trois étapes avec l'adresse
+de rappel prête à copier. Personne ne tombe sur la page d'erreur
+`Unsupported provider`. Le reste du site fonctionne normalement.
 
 ### La lettre
 

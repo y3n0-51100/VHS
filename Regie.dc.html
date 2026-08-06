@@ -491,6 +491,22 @@
         </div>
       </sc-if>
 
+      <sc-if value="{{ googleEteint }}">
+        <div style="display: flex; flex-direction: column; gap: 10px; border: 1px solid rgba(216,69,47,0.35); border-radius: 3px; padding: 15px 17px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 9px; height: 9px; border-radius: 50%; background: var(--rec);"></span>
+            <strong>La connexion Google n'est pas encore activée</strong>
+          </div>
+          <div class="r-aide">Sans elle, personne ne peut publier ni s'abonner à la lettre — le reste du site fonctionne. Trois réglages, une seule fois :</div>
+          <ol style="margin: 0; padding-left: 22px; font-size: 16px; line-height: 1.75; color: var(--papier-2);">
+            <li>Dans <strong>Google Cloud Console › Identifiants</strong>, créez un <em>ID client OAuth</em> de type « Application Web ». Dans <em>URI de redirection autorisés</em>, collez :<br><span class="r-mono" style="color: var(--phosphore); word-break: break-all;">{{ urlRappel }}</span></li>
+            <li>Dans <strong>Supabase › Authentication › Sign In / Providers › Google</strong>, collez l'ID client et le secret, puis activez.</li>
+            <li>Dans <strong>Supabase › Authentication › URL Configuration</strong>, mettez <span class="r-mono">{{ urlSite }}</span> en <em>Site URL</em> et ajoutez-la aux <em>Redirect URLs</em>.</li>
+          </ol>
+          <div class="r-aide">Puis rechargez cette page. En attendant, le panneau « Secours » plus bas reste le moyen de publier.</div>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ compteNonAdmin }}">
         <div style="display: flex; flex-direction: column; gap: 10px;">
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -754,13 +770,14 @@ class Component extends DCLogic {
     code: "",
     codeVisible: false,
     sansPhotos: false,
-    compte: null, admin: false, enPublication: false, abonnes: []
+    compte: null, admin: false, enPublication: false, abonnes: [], googleActif: false
   };
 
   componentDidMount() {
     const retour = Nuage.recupererRetourGoogle();
     if (retour && retour.erreur) this.crier("Connexion refusée : " + retour.erreur);
     this.reprendreCompte();
+    Nuage.googleActif().then((ok) => this.setState({ googleActif: ok })).catch(() => {});
     this.chargerSite(false);
     this._echap = (e) => { if (e.key === "Escape") this.setState({ confirmBande: -1, confirmPersonne: -1, confirmVider: false }); };
     window.addEventListener("keydown", this._echap);
@@ -1373,12 +1390,17 @@ class Component extends DCLogic {
       texteVider: s.confirmVider ? "Confirmer l'effacement ?" : "⌫ Effacer le brouillon local",
 
       // ——— Le compte, la publication, la lettre ———
-      sansCompte: !s.compte,
+      sansCompte: !s.compte && s.googleActif,
+      googleEteint: !s.compte && !s.googleActif,
+      urlRappel: Nuage.URL_BASE + "/auth/v1/callback",
+      urlSite: window.location.origin,
       compteNonAdmin: !!s.compte && !s.admin,
       peutPublier: !!s.compte && s.admin,
       admin: s.admin,
       compteEmail: s.compte ? s.compte.email : "",
-      onConnexion: () => Nuage.connexionGoogle(),
+      onConnexion: () => {
+        Nuage.connexionGoogle().catch((e) => this.crier(String(e.message || e)));
+      },
       onDeconnexion: () => this.seDeconnecter(),
       onPublier: () => this.publier(),
       textePublier: s.enPublication ? "Publication…" : "▲ Publier maintenant",

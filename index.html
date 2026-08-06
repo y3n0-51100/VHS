@@ -913,7 +913,7 @@ class Component extends DCLogic {
     annees: [], personnes: [], evenements: [], cassettes: [],
     favorisSeuls: false, favoris: [],
     lecture: null, phase: "insert",
-    compte: null, abonne: false, occupeCompte: false, erreurCompte: ""
+    compte: null, abonne: false, occupeCompte: false, erreurCompte: "", googleActif: false
   };
 
   componentDidMount() {
@@ -933,6 +933,7 @@ class Component extends DCLogic {
     const retour = Nuage.recupererRetourGoogle();
     if (retour && retour.erreur) this.setState({ erreurCompte: retour.erreur });
     this.reprendreCompte();
+    Nuage.googleActif().then((ok) => this.setState({ googleActif: ok })).catch(() => {});
 
     chargerDepuisNuage().then((d) => {
       if (!d) return;
@@ -1146,16 +1147,20 @@ class Component extends DCLogic {
 
       // ——— La lettre. Se connecter ne déverrouille rien et ne cache rien :
       //      c'est uniquement pour recevoir des nouvelles. ———
-      sansCompte: !s.compte,
+      sansCompte: !s.compte && s.googleActif,
       avecCompte: !!s.compte,
       compteNom: s.compte ? s.compte.nom : "",
       erreurCompte: s.erreurCompte,
       lettreTexte: !s.compte
-        ? "De temps en temps, un mot quand de nouvelles bandes sortent du carton. Connectez-vous avec Google si vous voulez le recevoir — le site s'ouvre très bien sans, avec le seul mot de passe de la maison."
+        ? (s.googleActif
+            ? "De temps en temps, un mot quand de nouvelles bandes sortent du carton. Connectez-vous avec Google si vous voulez le recevoir — le site s'ouvre très bien sans, avec le seul mot de passe de la maison."
+            : "La lettre n'est pas encore ouverte aux inscriptions. Elle le sera dès que la connexion Google sera activée ; en attendant, le site fonctionne normalement.")
         : (s.abonne
             ? "Vous recevrez un mot à chaque fournée de nouvelles bandes. Vous pouvez arrêter quand vous voulez."
             : "Vous êtes connecté, mais pas encore inscrit à la lettre."),
-      onConnexion: () => Nuage.connexionGoogle(),
+      onConnexion: () => {
+        Nuage.connexionGoogle().catch((e) => this.setState({ erreurCompte: String(e.message || e) }));
+      },
       onDeconnexion: () => this.seDeconnecter(),
       onAbonnement: () => this.basculeAbonnement(),
       abonneTexte: s.occupeCompte ? "Un instant…" : (s.abonne ? "Inscrit à la lettre" : "Recevoir la lettre"),

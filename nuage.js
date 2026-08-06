@@ -124,7 +124,31 @@
     return profil(await r.json());
   }
 
-  function connexionGoogle(retour) {
+  // Supabase publie la liste de ses fournisseurs actifs. On la consulte avant
+  // d'envoyer qui que ce soit chez Google : tant que le fournisseur n'est pas
+  // activé dans le tableau de bord, l'aller-retour se termine sur une page de
+  // JSON brut — « Unsupported provider » — que personne ne devrait voir.
+  let _reglagesAuth = null;
+  async function reglagesAuth() {
+    if (_reglagesAuth) return _reglagesAuth;
+    try {
+      const r = await fetch(URL_BASE + "/auth/v1/settings", { headers: { apikey: CLE_PUBLIQUE } });
+      _reglagesAuth = r.ok ? await r.json() : { external: {} };
+    } catch (e) {
+      _reglagesAuth = { external: {} };
+    }
+    return _reglagesAuth;
+  }
+
+  async function googleActif() {
+    const s = await reglagesAuth();
+    return !!(s && s.external && s.external.google);
+  }
+
+  async function connexionGoogle(retour) {
+    if (!(await googleActif())) {
+      throw new Error("La connexion Google n'est pas encore activée côté Supabase.");
+    }
     const dest = retour || (global.location.origin + global.location.pathname);
     global.location.href = URL_BASE + "/auth/v1/authorize?provider=google&redirect_to=" +
       encodeURIComponent(dest);
@@ -258,6 +282,7 @@
     URL_BASE: URL_BASE,
     session: session,
     recupererRetourGoogle: recupererRetourGoogle,
+    googleActif: googleActif,
     connexionGoogle: connexionGoogle,
     deconnexion: deconnexion,
     lireCatalogue: lireCatalogue,
