@@ -1,7 +1,14 @@
 # Cloudflare Pages — en-têtes appliqués au site publié.
 # Une adresse .pages.dev est publique : on demande au moins aux moteurs de
 # recherche de ne pas l'indexer ni la mettre en cache.
+#
+# Referrer-Policy : surtout pas « no-referrer ». Le lecteur YouTube lit
+# l'en-tête Referer pour savoir quel domaine l'embarque ; privé de cet
+# en-tête, il refuse de démarrer avec « Erreur 153 · erreur de
+# configuration du lecteur vidéo ». « strict-origin-when-cross-origin »
+# n'envoie que l'origine (https://vhs-schaff.pages.dev/), jamais le
+# chemin : YouTube a ce qu'il lui faut, sans rien apprendre de la page.
 /*
   X-Robots-Tag: noindex, nofollow, noarchive
-  Referrer-Policy: no-referrer
+  Referrer-Policy: strict-origin-when-cross-origin
   X-Content-Type-Options: nosniff
