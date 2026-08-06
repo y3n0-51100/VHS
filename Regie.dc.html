@@ -113,6 +113,32 @@
     .r-atelier { grid-template-columns: minmax(0, 1fr); }
     .r-atelier > .r-carton { position: static !important; max-height: 60vh !important; }
   }
+
+  /* ── La barre du haut, identique au site ─────────────────────────────── */
+  .barre-haut { position: relative; z-index: 40; display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap; padding: 7px clamp(10px, 2vw, 24px);
+    background: #0c0705; border-bottom: 1px solid rgba(255,215,154,0.12); }
+  .bh-espace { flex: 1; min-width: 0; }
+  .bh-bouton { cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+    min-height: 40px; padding: 8px 14px; border-radius: 3px;
+    border: 1px solid rgba(255,215,154,0.22); background: #180f0a; color: var(--papier-2);
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.14em; font-size: 13px; line-height: 1; white-space: nowrap; }
+  .bh-bouton:hover { color: var(--ambre-clair); border-color: rgba(255,215,154,0.45); }
+  .bh-ico { font-size: 15px; line-height: 1; }
+
+  /* ── Version compacte, décidée par le script (voir index.html) ───────── */
+  html[data-compact] header > div:first-child { padding: 9px 11px !important; gap: 9px !important; }
+  html[data-compact] .r-titre-regie { font-size: 26px !important; }
+  html[data-compact] .r-sous-titre { display: none !important; }
+  html[data-compact] .r-compteur { padding: 5px 9px !important; gap: 8px !important; }
+  html[data-compact] .r-compteur span { font-size: 17px !important; letter-spacing: 0.12em !important; }
+  html[data-compact] header nav { width: 100%; margin-left: 0 !important; gap: 6px !important; }
+  html[data-compact] header nav .r-bouton { flex: 1 1 auto; min-width: 0; justify-content: center;
+    padding: 10px 8px !important; font-size: 12px !important; letter-spacing: 0.07em !important; }
+  html[data-compact] .r-atelier { grid-template-columns: minmax(0, 1fr) !important; }
+  html[data-compact] .r-atelier > .r-carton { position: static !important; max-height: 55vh !important; }
+  html[data-compact] .r-grille { grid-template-columns: minmax(0, 1fr) !important; }
 </style>
 </helmet>
 
@@ -149,15 +175,25 @@
 <sc-if value="{{ ouvert }}" hint-placeholder-val="{{ true }}">
 <div style="position: relative; z-index: 5;">
 
+  <div class="barre-haut">
+    <button onClick="{{ onBasculerVue }}" class="bh-bouton" title="{{ vueTitre }}">
+      <span class="bh-ico">{{ vueIcone }}</span>{{ vueLibelle }}
+    </button>
+    <span class="bh-espace"></span>
+    <sc-if value="{{ avecCompte }}">
+      <span class="bh-bouton" style="cursor: default; border-color: rgba(134,220,200,0.4); color: var(--phosphore);">{{ compteEmail }}</span>
+    </sc-if>
+  </div>
+
   <header style="position: sticky; top: 0; z-index: 30; background: linear-gradient(#2e1c13, #1a1009); border-bottom: 1px solid rgba(255,215,154,0.14); box-shadow: 0 18px 40px rgba(0,0,0,0.55);">
     <div style="max-width: 1680px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
       <div style="display: flex; align-items: center; gap: 12px;">
         <span style="width: 11px; height: 11px; border-radius: 50%; background: var(--rec); box-shadow: 0 0 14px var(--rec); animation: clignote 2.4s steps(1) infinite;"></span>
-        <span style="font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 0.06em; color: var(--ambre-clair);">Régie</span>
-        <span style="font-family: 'Caveat', cursive; font-size: 22px; color: var(--papier-2); opacity: 0.7;">{{ titreSite }}</span>
+        <span class="r-titre-regie" style="font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 0.06em; color: var(--ambre-clair);">Régie</span>
+        <span class="r-sous-titre" style="font-family: 'Caveat', cursive; font-size: 22px; color: var(--papier-2); opacity: 0.7;">{{ titreSite }}</span>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 14px; padding: 7px 14px; border-radius: 3px; background: #0d0a07; box-shadow: inset 0 2px 8px rgba(0,0,0,0.9);">
+      <div class="r-compteur" style="display: flex; align-items: center; gap: 14px; padding: 7px 14px; border-radius: 3px; background: #0d0a07; box-shadow: inset 0 2px 8px rgba(0,0,0,0.9);">
         <span style="font-family: 'VT323', monospace; font-size: 25px; color: var(--phosphore); letter-spacing: 0.1em; text-shadow: 0 0 14px rgba(134,220,200,0.55);">{{ compteur }}</span>
         <span style="font-family: 'VT323', monospace; font-size: 16px; color: var(--ambre); letter-spacing: 0.2em; opacity: 0.8;">BANDES</span>
         <sc-if value="{{ aDesTrous }}">
@@ -596,7 +632,7 @@
   <footer style="border-top: 1px solid rgba(255,215,154,0.14); background: rgba(0,0,0,0.4); padding: 20px 24px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; font-family: 'VT323', monospace; font-size: 18px; letter-spacing: 0.12em; color: var(--papier-2);">
     <span style="opacity: 0.7;">RÉGIE · USAGE INTERNE</span>
     <span style="opacity: 0.35;">·</span>
-    <a href="{{ lienSite }}" style="opacity: 0.85;">↗ {{ nomFichierSite }}</a>
+    <a href="{{ lienSite }}" style="opacity: 0.85; display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px;">↗ {{ nomFichierSite }}</a>
     <button onClick="{{ onSortir }}" class="r-bouton" style="margin-left: auto;">⏻ Fermer la régie</button>
   </footer>
 </div>
@@ -641,6 +677,30 @@ const REGLAGES_DEFAUT = {
   protection: true,
   clinsDoeil: true
 };
+
+// Version mobile / version bureau. Même mécanique et même clé que le site :
+// le choix fait dans l'une des deux pages vaut pour l'autre.
+const CLE_VUE = "bandes-famille-vue";
+const SEUIL_COMPACT = 720;
+
+function vueChoisie() {
+  try {
+    const v = localStorage.getItem(CLE_VUE);
+    return v === "mobile" || v === "bureau" ? v : "auto";
+  } catch (e) { return "auto"; }
+}
+
+function appliquerVue(vue) {
+  const compact = vue === "mobile" || (vue === "auto" && window.innerWidth <= SEUIL_COMPACT);
+  const racine = document.documentElement;
+  if (compact) racine.setAttribute("data-compact", "");
+  else racine.removeAttribute("data-compact");
+  const meta = document.querySelector('meta[name="viewport"]');
+  if (meta) {
+    meta.setAttribute("content", vue === "bureau" ? "width=1280" : "width=device-width, initial-scale=1");
+  }
+  return compact;
+}
 
 function txt(v) { return typeof v === "string" ? v : (v == null ? "" : String(v)); }
 
@@ -770,7 +830,8 @@ class Component extends DCLogic {
     code: "",
     codeVisible: false,
     sansPhotos: false,
-    compte: null, admin: false, enPublication: false, abonnes: [], googleActif: false
+    compte: null, admin: false, enPublication: false, abonnes: [], googleActif: false,
+    miseEnPage: vueChoisie(), compact: false
   };
 
   componentDidMount() {
@@ -779,12 +840,26 @@ class Component extends DCLogic {
     this.reprendreCompte();
     Nuage.googleActif().then((ok) => this.setState({ googleActif: ok })).catch(() => {});
     this.chargerSite(false);
+    this.setState({ compact: appliquerVue(this.state.miseEnPage) });
+    this._taille = () => {
+      if (this.state.miseEnPage === "auto") this.setState({ compact: appliquerVue("auto") });
+    };
+    window.addEventListener("resize", this._taille);
+    window.addEventListener("orientationchange", this._taille);
     this._echap = (e) => { if (e.key === "Escape") this.setState({ confirmBande: -1, confirmPersonne: -1, confirmVider: false }); };
     window.addEventListener("keydown", this._echap);
   }
   componentWillUnmount() {
     window.removeEventListener("keydown", this._echap);
+    window.removeEventListener("resize", this._taille);
+    window.removeEventListener("orientationchange", this._taille);
     clearTimeout(this._toast);
+  }
+
+  basculerVue() {
+    const choix = (this.state.miseEnPage === "bureau") ? "mobile" : "bureau";
+    try { localStorage.setItem(CLE_VUE, choix); } catch (e) {}
+    this.setState({ miseEnPage: choix, compact: appliquerVue(choix) });
   }
 
   // ——— Le compte ———
@@ -1390,6 +1465,12 @@ class Component extends DCLogic {
       texteVider: s.confirmVider ? "Confirmer l'effacement ?" : "⌫ Effacer le brouillon local",
 
       // ——— Le compte, la publication, la lettre ———
+      onBasculerVue: () => this.basculerVue(),
+      vueLibelle: s.compact ? "Version bureau" : "Version mobile",
+      vueIcone: s.compact ? "🖥" : "📱",
+      vueTitre: s.compact ? "Mise en page large" : "Mise en page resserrée",
+      avecCompte: !!s.compte,
+
       sansCompte: !s.compte && s.googleActif,
       googleEteint: !s.compte && !s.googleActif,
       urlRappel: Nuage.URL_BASE + "/auth/v1/callback",

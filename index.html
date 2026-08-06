@@ -142,18 +142,65 @@
   @keyframes insTexteA { 0% { opacity: 1; } 70%, 100% { opacity: 0; } }
   @keyframes insTexteB { 0%, 69% { opacity: 0; } 70%, 100% { opacity: 1; } }
 
+  /* ── La barre du haut ──────────────────────────────────────────────────── */
+  .barre-haut { position: relative; z-index: 40; display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap; padding: 7px clamp(12px, 2vw, 28px);
+    background: #0c0705; border-bottom: 1px solid rgba(255,215,154,0.12); }
+  .bh-espace { flex: 1; min-width: 0; }
+  .bh-bouton { cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+    min-height: 40px; padding: 8px 14px; border-radius: 3px;
+    border: 1px solid rgba(255,215,154,0.22); background: #180f0a; color: var(--papier-2);
+    font-family: "Barlow Condensed", sans-serif; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.14em; font-size: 13px; line-height: 1; white-space: nowrap; }
+  .bh-bouton:hover { color: var(--ambre-clair); border-color: rgba(255,215,154,0.45); }
+  .bh-ico { font-size: 15px; line-height: 1; }
+  .bh-google { color: #2a1d16; background: linear-gradient(var(--ambre-clair), var(--ambre));
+    border-color: rgba(255,215,154,0.55); }
+  .bh-google:hover { color: #2a1d16; filter: brightness(1.07); }
+  .bh-g { display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%;
+    background: #fff; color: #4285f4; font-family: Georgia, serif; font-weight: 700; font-size: 14px; }
+  .bh-qui { display: inline-flex; align-items: center; gap: 8px; padding: 0 4px; min-width: 0;
+    font-family: "Caveat", cursive; font-size: 21px; color: var(--ambre-clair);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bh-pastille { flex: none; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--phosphore); box-shadow: 0 0 9px var(--phosphore); }
+
+  /* ── Version compacte ───────────────────────────────────────────────────
+     Pilotée par le script (html[data-compact]), pas par une media query :
+     le choix explicite du visiteur doit pouvoir contredire la largeur réelle
+     de l'écran, dans les deux sens. */
+  html[data-compact] .barre-haut { padding: 6px 10px; gap: 6px; }
+  html[data-compact] .bh-bouton { font-size: 12px; padding: 8px 11px; letter-spacing: 0.1em; }
+  html[data-compact] .bh-qui { font-size: 19px; max-width: 42vw; }
+
+  /* L'en-tête : le titre et le compteur cèdent la place, les onglets passent
+     sur toute la largeur et se partagent la ligne au lieu de déborder. */
+  html[data-compact] header > div:first-child { padding: 10px 12px !important; gap: 10px !important; }
+  html[data-compact] header .sc-interp, html[data-compact] header span { line-height: 1.15; }
+  html[data-compact] .titre-site { font-size: 22px !important; }
+  html[data-compact] .compteur-bloc { padding: 6px 10px !important; gap: 9px !important; }
+  html[data-compact] .compteur-bloc span:first-child { font-size: 21px !important; }
+  html[data-compact] .compteur-bloc span:last-child { font-size: 13px !important; letter-spacing: 0.14em !important; }
+  html[data-compact] nav { margin-left: 0 !important; width: 100%; gap: 6px !important; }
+  html[data-compact] nav button { flex: 1 1 0; min-width: 0; padding: 11px 6px !important;
+    font-size: 12px !important; letter-spacing: 0.08em !important; }
+
+  /* Le corps : on resserre l'échelle typographique, calée pour un grand écran. */
+  html[data-compact] .bloc-large { padding-left: 16px !important; padding-right: 16px !important; }
+  html[data-compact] .intro-compteur { font-size: 58px !important; }
+  html[data-compact] .intro-texte { font-size: 17px !important; line-height: 1.5 !important; }
+  html[data-compact] .titre-section { font-size: clamp(34px, 11vw, 52px) !important; }
+
   /* Sur un écran étroit, la fenêtre 16/9 ne fait plus que ~190 px de haut :
      la machine doit descendre pour laisser voir la cassette, et tout ce qui
      n'est que décor (ouïes, boutons) s'efface. */
-  @media (max-width: 640px) {
-    .ins-zone { height: 64%; }
-    .ins-magneto { top: 64%; padding: 0 12px; }
-    .ins-cassette { width: min(56%, 210px); }
-    .ins-ouies, .ins-boutons { display: none; }
-    .ins-fente { left: 7%; right: 7%; top: 7px; height: 7px; }
-    .ins-bandeau { padding-top: 20px; gap: 7px; }
-    .ins-statut { margin-top: 5px; letter-spacing: 0.18em; }
-  }
+  html[data-compact] .ins-zone { height: 64%; }
+  html[data-compact] .ins-magneto { top: 64%; padding: 0 12px; }
+  html[data-compact] .ins-cassette { width: min(56%, 210px); }
+  html[data-compact] .ins-ouies, html[data-compact] .ins-boutons { display: none; }
+  html[data-compact] .ins-fente { left: 7%; right: 7%; top: 7px; height: 7px; }
+  html[data-compact] .ins-bandeau { padding-top: 20px; gap: 7px; }
+  html[data-compact] .ins-statut { margin-top: 5px; letter-spacing: 0.18em; }
 
   /* Mouvement réduit : la mécanique reste lisible, mais plus rien ne bouge.
      Le script raccourcit l'attente en parallèle. */
@@ -220,13 +267,33 @@
 <sc-if value="{{ ouvert }}" hint-placeholder-val="{{ true }}">
 <div style="position: relative; z-index: 5;">
 
+  <!-- La barre du haut : à gauche le choix de la mise en page, à droite le
+       compte. Elle passe avant tout le reste, y compris l'en-tête collant. -->
+  <div class="barre-haut">
+    <button onClick="{{ onBasculerVue }}" class="bh-bouton" title="{{ vueTitre }}">
+      <span class="bh-ico">{{ vueIcone }}</span>{{ vueLibelle }}
+    </button>
+    <span class="bh-espace"></span>
+    <sc-if value="{{ sansCompte }}">
+      <button onClick="{{ onConnexion }}" class="bh-bouton bh-google">
+        <span class="bh-g">G</span>{{ libelleConnexion }}
+      </button>
+    </sc-if>
+    <sc-if value="{{ avecCompte }}">
+      <span class="bh-qui" title="{{ compteEmail }}">
+        <span class="bh-pastille"></span>{{ compteNom }}
+      </span>
+      <button onClick="{{ onDeconnexion }}" class="bh-bouton">Se déconnecter</button>
+    </sc-if>
+  </div>
+
   <header style="position: sticky; top: 0; z-index: 30; background: linear-gradient(#2e1c13, #1a1009); border-bottom: 1px solid rgba(255,215,154,0.14); box-shadow: 0 18px 40px rgba(0,0,0,0.55);">
     <div style="max-width: 1600px; margin: 0 auto; padding: 14px 28px; display: flex; align-items: center; gap: 22px; flex-wrap: wrap;">
       <div style="display: flex; align-items: center; gap: 14px;">
         <span style="width: 11px; height: 11px; border-radius: 50%; background: var(--rec); box-shadow: 0 0 14px var(--rec);"></span>
-        <span style="font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 0.06em; color: var(--ambre-clair);">{{ titre }}</span>
+        <span class="titre-site" style="font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 0.06em; color: var(--ambre-clair);">{{ titre }}</span>
       </div>
-      <div style="display: flex; align-items: center; gap: 14px; padding: 8px 16px; border-radius: 4px; background: #0d0a07; box-shadow: inset 0 2px 8px rgba(0,0,0,0.9);">
+      <div class="compteur-bloc" style="display: flex; align-items: center; gap: 14px; padding: 8px 16px; border-radius: 4px; background: #0d0a07; box-shadow: inset 0 2px 8px rgba(0,0,0,0.9);">
         <span style="font-family: 'VT323', monospace; font-size: 27px; color: var(--phosphore); letter-spacing: 0.1em; text-shadow: 0 0 14px rgba(134,220,200,0.55);">{{ compteur }}</span>
         <span style="font-family: 'VT323', monospace; font-size: 17px; color: var(--ambre); letter-spacing: 0.22em; opacity: 0.8;">{{ etatFiltres }}</span>
       </div>
@@ -248,15 +315,15 @@
   </header>
 
   <sc-if value="{{ vueFrise }}" hint-placeholder-val="{{ true }}">
-  <div style="max-width: 1600px; margin: 0 auto; padding: 40px 28px 110px;">
+  <div class="bloc-large" style="max-width: 1600px; margin: 0 auto; padding: 40px 28px 110px;">
 
     <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; align-items: end; padding-bottom: 30px;">
       <div>
         <div style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 0.26em; color: var(--phosphore); opacity: 0.8;">COMPTEUR</div>
-        <div style="font-family: 'Bebas Neue', sans-serif; font-size: clamp(70px, 11vw, 150px); line-height: 0.84; color: var(--ambre-clair); text-shadow: 0 0 40px rgba(232,163,61,0.4);">{{ nbAffiche }}<span style="font-size: 0.3em; color: var(--papier-2); opacity: 0.6;"> / {{ nbTotal }}</span></div>
+        <div class="intro-compteur" style="font-family: 'Bebas Neue', sans-serif; font-size: clamp(70px, 11vw, 150px); line-height: 0.84; color: var(--ambre-clair); text-shadow: 0 0 40px rgba(232,163,61,0.4);">{{ nbAffiche }}<span style="font-size: 0.3em; color: var(--papier-2); opacity: 0.6;"> / {{ nbTotal }}</span></div>
         <div style="font-family: 'Caveat', cursive; font-size: 27px; color: var(--papier); opacity: 0.8;">bandes sorties du carton</div>
       </div>
-      <p style="margin: 0; font-size: 21px; line-height: 1.62; color: var(--papier-2); max-width: 62ch; text-wrap: pretty;">Le magnétoscope tourne encore. Chaque cassette a été lue une dernière fois, en temps réel, avec le grain, les sauts d'image et les voix de ceux qui ne sont plus là. Choisissez une année, un prénom, un Noël — et laissez la bande défiler.</p>
+      <p class="intro-texte" style="margin: 0; font-size: 21px; line-height: 1.62; color: var(--papier-2); max-width: 62ch; text-wrap: pretty;">Le magnétoscope tourne encore. Chaque cassette a été lue une dernière fois, en temps réel, avec le grain, les sauts d'image et les voix de ceux qui ne sont plus là. Choisissez une année, un prénom, un Noël — et laissez la bande défiler.</p>
     </section>
 
     <section style="display: flex; flex-direction: column; gap: 16px; padding: 22px 24px 24px; border-radius: 6px; background: linear-gradient(#2b1a12, #1c1109); box-shadow: 0 26px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,215,154,0.16);">
@@ -364,7 +431,7 @@
   </sc-if>
 
   <sc-if value="{{ vuePersonnes }}">
-  <div style="max-width: 1600px; margin: 0 auto; padding: 48px 28px 110px;">
+  <div class="bloc-large" style="max-width: 1600px; margin: 0 auto; padding: 48px 28px 110px;">
     <div style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 0.26em; color: var(--phosphore); opacity: 0.8;">TROMBINOSCOPE</div>
     <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: clamp(50px, 7vw, 96px); line-height: 0.88; margin: 0 0 12px; color: var(--ambre-clair);">Ceux qui sont dans le champ</h2>
     <p style="margin: 0 0 40px; font-size: 20px; line-height: 1.6; color: var(--papier-2); max-width: 66ch;">Une fiche par prénom. Cliquez, et la frise ne garde que les bandes où on l'entend rire, souffler les bougies ou râler contre la caméra.</p>
@@ -420,7 +487,7 @@
 
   <!-- La lettre : facultative de bout en bout. Sans compte, le site marche
        exactement pareil — c'est un supplément, pas un péage. -->
-  <section style="max-width: 1180px; margin: 0 auto; padding: 0 28px 56px;">
+  <section class="bloc-large" style="max-width: 1180px; margin: 0 auto; padding: 0 28px 56px;">
     <div style="border: 1px solid rgba(255,215,154,0.16); border-radius: 5px; background: rgba(0,0,0,0.3); padding: clamp(20px, 3vw, 30px); display: flex; gap: 22px; align-items: center; flex-wrap: wrap;">
       <div style="flex: 1; min-width: 260px;">
         <div style="font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: 0.28em; font-size: 13px; color: #8a6a3c;">La lettre de la famille</div>
@@ -448,7 +515,7 @@
     <span style="opacity: 0.7;">MERCI DE REMBOBINER</span>
     <span style="opacity: 0.4;">·</span>
     <span style="opacity: 0.7;">USAGE FAMILIAL · NE PAS PARTAGER LE LIEN</span>
-    <a href="{{ lienRegie }}" style="opacity: 0.75;">✎ RÉGIE</a>
+    <a href="{{ lienRegie }}" style="opacity: 0.75; display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px;">✎ RÉGIE</a>
     <span style="margin-left: auto; opacity: 0.5; animation: clignote 1.6s steps(1) infinite;">12:00</span>
     <button onClick="{{ onVerrouiller }}" style="cursor: pointer; min-height: 44px; padding: 10px 18px; border-radius: 3px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.16em; font-size: 14px; color: var(--papier); background: #150e09; border: 1px solid rgba(255,215,154,0.22);" style-hover="color: var(--ambre-clair)">⏻ Éteindre</button>
   </footer>
@@ -887,6 +954,44 @@ async function chargerDepuisNuage() {
 // Le temps que met la cassette à entrer. Une seule valeur : le script attend
 // ce délai avant de lancer la vidéo, et la passe au CSS qui cale ses
 // animations dessus. Qui demande moins de mouvement n'attend presque pas.
+// ═══════════════════════════════════════════════════════════════════════════
+//  Version mobile / version bureau
+//
+//  Trois états : « auto » suit la largeur de l'écran, « mobile » et « bureau »
+//  sont le choix explicite du visiteur et l'emportent. Plutôt que de dupliquer
+//  chaque règle entre une media query et une classe, on décide ici, une fois,
+//  et le CSS ne regarde qu'un seul attribut : html[data-compact].
+//
+//  En version bureau sur un téléphone, on réécrit aussi le viewport : la page
+//  est rendue à 1280 px et le navigateur la réduit — c'est exactement ce que
+//  faisaient les vieux liens « version bureau », et ça reste la seule façon
+//  honnête d'obtenir la mise en page large sur un petit écran.
+// ═══════════════════════════════════════════════════════════════════════════
+const CLE_VUE = "bandes-famille-vue";
+const SEUIL_COMPACT = 720;
+
+function vueChoisie() {
+  try {
+    const v = localStorage.getItem(CLE_VUE);
+    return v === "mobile" || v === "bureau" ? v : "auto";
+  } catch (e) { return "auto"; }
+}
+
+function appliquerVue(vue) {
+  const compact = vue === "mobile" || (vue === "auto" && window.innerWidth <= SEUIL_COMPACT);
+  const racine = document.documentElement;
+  if (compact) racine.setAttribute("data-compact", "");
+  else racine.removeAttribute("data-compact");
+
+  const meta = document.querySelector('meta[name="viewport"]');
+  if (meta) {
+    meta.setAttribute("content", vue === "bureau"
+      ? "width=1280"
+      : "width=device-width, initial-scale=1");
+  }
+  return compact;
+}
+
 const INSERTION_MS = 1800;
 function mouvementReduit() {
   try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; }
@@ -913,7 +1018,8 @@ class Component extends DCLogic {
     annees: [], personnes: [], evenements: [], cassettes: [],
     favorisSeuls: false, favoris: [],
     lecture: null, phase: "insert",
-    compte: null, abonne: false, occupeCompte: false, erreurCompte: "", googleActif: false
+    compte: null, abonne: false, occupeCompte: false, erreurCompte: "", googleActif: false,
+    miseEnPage: vueChoisie(), compact: false
   };
 
   componentDidMount() {
@@ -929,6 +1035,13 @@ class Component extends DCLogic {
       this.setState({ donnees: chargerDonnees() });
     };
     window.addEventListener("storage", this._sync);
+
+    this.setState({ compact: appliquerVue(this.state.miseEnPage) });
+    this._taille = () => {
+      if (this.state.miseEnPage === "auto") this.setState({ compact: appliquerVue("auto") });
+    };
+    window.addEventListener("resize", this._taille);
+    window.addEventListener("orientationchange", this._taille);
 
     const retour = Nuage.recupererRetourGoogle();
     if (retour && retour.erreur) this.setState({ erreurCompte: retour.erreur });
@@ -975,9 +1088,19 @@ class Component extends DCLogic {
     try { await Nuage.deconnexion(); } catch (e) {}
     this.setState({ compte: null, abonne: false, occupeCompte: false });
   }
+  basculerVue() {
+    // On ne repasse jamais en « auto » : le visiteur qui touche à ce bouton
+    // veut décider lui-même, et son choix doit survivre à une rotation.
+    const choix = (this.state.miseEnPage === "bureau") ? "mobile" : "bureau";
+    try { localStorage.setItem(CLE_VUE, choix); } catch (e) {}
+    this.setState({ miseEnPage: choix, compact: appliquerVue(choix) });
+  }
+
   componentWillUnmount() {
     window.removeEventListener("keydown", this._key);
     window.removeEventListener("storage", this._sync);
+    window.removeEventListener("resize", this._taille);
+    window.removeEventListener("orientationchange", this._taille);
     clearTimeout(this._t);
   }
 
@@ -1147,9 +1270,19 @@ class Component extends DCLogic {
 
       // ——— La lettre. Se connecter ne déverrouille rien et ne cache rien :
       //      c'est uniquement pour recevoir des nouvelles. ———
+      // ——— La barre du haut ———
+      onBasculerVue: () => this.basculerVue(),
+      vueLibelle: s.compact ? "Version bureau" : "Version mobile",
+      libelleConnexion: s.compact ? "Connexion" : "Se connecter avec Google",
+      vueIcone: s.compact ? "🖥" : "📱",
+      vueTitre: s.compact
+        ? "Afficher la mise en page large, comme sur un ordinateur"
+        : "Afficher la mise en page resserrée, comme sur un téléphone",
+
       sansCompte: !s.compte && s.googleActif,
       avecCompte: !!s.compte,
       compteNom: s.compte ? s.compte.nom : "",
+      compteEmail: s.compte ? s.compte.email : "",
       erreurCompte: s.erreurCompte,
       lettreTexte: !s.compte
         ? (s.googleActif

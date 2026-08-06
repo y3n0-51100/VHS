@@ -49,6 +49,21 @@ serrure (voir plus bas). `robots.txt` et `_headers` demandent aux moteurs de
 recherche de ne pas indexer le site — c'est une politesse qu'ils respectent, pas
 une barrière.
 
+## Sur téléphone
+
+Les deux pages s'adaptent à l'écran, et une barre en haut laisse choisir :
+**Version mobile** resserre la mise en page, **Version bureau** rend la page à
+1280 px comme sur un ordinateur, à charge pour le navigateur de la réduire.
+
+Le choix est gardé dans le navigateur et vaut pour les deux pages. Il l'emporte
+sur la largeur réelle de l'écran, dans les deux sens : on peut donc forcer la
+mise en page resserrée sur un ordinateur, et la large sur un téléphone.
+
+Côté code, tout tient à un seul attribut, `html[data-compact]`, posé par le
+script. Les styles compacts ne s'écrivent qu'une fois et ne sont pas dupliqués
+entre une media query et une classe — ce qui évite qu'ils se contredisent quand
+le visiteur choisit l'inverse de ce que fait l'écran.
+
 ## Les codes
 
 | Porte | Réglage | Valeur d'origine |
