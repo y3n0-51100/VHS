@@ -1,8 +1,8 @@
 # Les bandes de la famille
 
 Un site privé pour regarder les VHS de famille numérisées, et sa régie pour les
-saisir. Deux pages, aucun serveur, aucune base de données : tout le contenu tient
-dans un bloc de données au bas du fichier du site.
+saisir. Deux pages statiques, servies par Cloudflare Pages ; le contenu vit dans
+une base Supabase, où la régie l'envoie d'un clic.
 
 ## Les fichiers
 
@@ -10,12 +10,12 @@ dans un bloc de données au bas du fichier du site.
 | --- | --- |
 | `index.html` | Le site : frise par année, filtres, trombinoscope, notice, lecteur YouTube. |
 | `Regie.dc.html` | La page d'administration : saisie des bandes, des prénoms, des réglages et des textes. |
+| `nuage.js` | Le lien avec Supabase : lecture et écriture du catalogue, connexion Google, abonnés. |
 | `support.js` | Le moteur de rendu (dc-runtime). Ne pas modifier. |
 | `_ds/industry-…/` | Le système de design importé. Ne pas modifier. |
 
 Les deux pages doivent rester **dans le même dossier** : elles se citent l'une
-l'autre par un lien relatif, et la régie lit le fichier du site pour connaître le
-contenu publié.
+l'autre par un lien relatif et chargent toutes deux `nuage.js`.
 
 ## Ouvrir
 
@@ -57,10 +57,15 @@ une barrière.
 | La régie | `codeRegie` | `regie` |
 
 Ce sont des loquets côté navigateur : ils écartent les curieux, pas quelqu'un de
-déterminé. Changez-les dans **Régie › Réglages**, et ne mettez sur ce dépôt que ce
-que vous accepteriez de voir circuler. Si le dépôt est public, tout le monde peut
-lire les mots de passe et les liens dans le code source — gardez-le privé, et les
+déterminé. Changez-les dans **Régie › Réglages**, et ne mettez en ligne que ce que
+vous accepteriez de voir circuler. Le contenu du catalogue est lisible par qui
+sait interroger la base, mot de passe ou non — gardez le dépôt privé, et les
 vidéos YouTube en **non répertorié**.
+
+La connexion Google ne change rien à cela : elle sert à recevoir la lettre, pas à
+garder la porte. Pour que l'archive soit réellement fermée, il faudrait exiger un
+compte pour lire — c'est un changement des règles de la table `catalogue`, à
+demander si vous le souhaitez un jour.
 
 ## Ajouter une bande
 
@@ -73,15 +78,60 @@ voient encore rien.
 
 ## Publier
 
-1. **Sauvegarde › Fabriquer le bloc**, puis **Copier**.
-2. Ouvrez `index.html` dans un éditeur.
-3. Remplacez tout ce qui va du marqueur `DONNEES-DEBUT` au marqueur `DONNEES-FIN`,
-   marqueurs compris, par ce que vous venez de copier.
-4. Commitez, poussez.
+**Sauvegarde › Publier maintenant.** C'est tout. Le site est à jour dans la
+seconde, pour tout le monde, sans toucher au dépôt.
 
-Le site compare les dates : votre brouillon local ne s'affiche que s'il est plus
-récent que le bloc publié. Une fois le bloc recopié, c'est lui qui fait foi — un
-vieux brouillon ne peut pas masquer ce que vous venez de publier.
+Publier demande d'être connecté avec Google, et que cette adresse figure dans la
+table `admins` de Supabase — le code de la régie n'écarte que les curieux de
+votre propre navigateur, il ne prouve rien à la base.
+
+Le panneau **4 · Secours** garde l'ancienne méthode : un bloc à recopier entre
+`DONNEES-DEBUT` et `DONNEES-FIN` dans `index.html`. Il ne sert que si Supabase
+est indisponible et que vous voulez malgré tout figer le contenu dans le fichier.
+
+## Le nuage
+
+Le catalogue tient en une seule ligne de la table `catalogue` : un document JSON
+de la même forme que ce que la régie manipule. Trois tables en tout.
+
+| Table | Qui lit | Qui écrit |
+| --- | --- | --- |
+| `catalogue` | tout le monde | les adresses listées dans `admins` |
+| `admins` | les administrateurs | personne depuis le site (à la main dans Supabase) |
+| `abonnes` | soi-même, et les administrateurs | soi-même |
+
+La clé qui figure dans `nuage.js` est publique et faite pour l'être : ce qu'elle
+autorise est décidé côté base, par les règles au niveau des lignes. Un visiteur
+sans compte peut lire le catalogue et rien d'autre — pas la liste des abonnés,
+pas celle des administrateurs, et il ne peut rien écrire.
+
+Le site démarre sur le bloc écrit dans `index.html`, puis la base prend la main
+dès qu'elle répond. Si elle ne répond pas, le site reste lisible avec ce bloc :
+c'est le filet, et c'est pour ça que le panneau de secours existe.
+
+### Pour que la connexion Google marche
+
+Trois réglages à faire une fois, que je ne peux pas faire à votre place :
+
+1. **Google Cloud Console** → *API et services* → *Identifiants* → créer un
+   *ID client OAuth* de type *Application Web*. Dans *URI de redirection
+   autorisés*, mettez :
+   `https://jjlanebcwttsiechgjzz.supabase.co/auth/v1/callback`
+2. **Supabase** → *Authentication* → *Sign In / Providers* → *Google* : collez
+   l'ID client et le secret, activez.
+3. **Supabase** → *Authentication* → *URL Configuration* : *Site URL* à
+   `https://vhs-schaff.pages.dev`, et ajoutez la même adresse dans
+   *Redirect URLs*.
+
+Tant que ce n'est pas fait, le bouton « Se connecter avec Google » renvoie une
+erreur — le reste du site fonctionne normalement.
+
+### La lettre
+
+Un visiteur connecté peut cocher qu'il veut recevoir la lettre ; son adresse
+part dans `abonnes`. La régie affiche la liste et l'exporte en CSV
+(point-virgule, avec BOM pour qu'Excel respecte les accents). L'envoi lui-même
+n'est pas dans le site : prenez le CSV et votre outil habituel.
 
 ## Les photos
 

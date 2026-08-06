@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="./nuage.js"></script>
 </head>
 <body>
 <x-dc>
@@ -44,6 +45,126 @@
   @keyframes bobine { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   @keyframes remonte { 0% { transform: translateY(26px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
   @keyframes flammeVacille { 0%, 100% { transform: scale(1) translateY(0); opacity: 0.9; } 40% { transform: scale(1.12) translateY(-1px); opacity: 1; } 70% { transform: scale(0.94) translateY(1px); opacity: 0.8; } }
+
+  /* ── L'insertion de la cassette ──────────────────────────────────────────
+     La cassette descend et glisse DERRIÈRE la façade du magnétoscope, qui la
+     recouvre : c'est ce recouvrement, et non un fondu, qui donne l'avalement.
+     Tout est calé sur --ins, que le script lit pour savoir quand lancer la
+     vidéo — une seule durée, jamais deux à tenir d'accord.                   */
+  .ins-scene { position: absolute; inset: 0; overflow: hidden; display: grid; place-items: center;
+    background: radial-gradient(72% 72% at 50% 38%, rgba(26,43,40,0.88), rgba(6,9,8,0.97)); perspective: 1000px; }
+  /* La zone s'arrête pile sur la ligne de la fente, et la cassette est calée
+     sur son bord bas. « translateY(0) » veut donc toujours dire « posée sur la
+     fente », quelle que soit la taille de l'écran : les pourcentages du
+     mouvement gardent le même sens partout. */
+  .ins-zone { position: absolute; left: 0; right: 0; top: 0; height: 58%;
+    display: grid; place-items: end center; z-index: 1; }
+
+  .ins-cassette { width: min(46%, 300px); aspect-ratio: 16 / 10;
+    transform-style: preserve-3d; animation: insGlisse var(--ins) cubic-bezier(0.42, 0, 0.26, 1) both; }
+  .ins-corps { position: absolute; inset: 0; border-radius: 7px 7px 3px 3px; overflow: hidden;
+    background: linear-gradient(158deg, #3d3d43 0%, #26262a 36%, #141416 100%);
+    box-shadow: 0 26px 52px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.17), inset 0 -4px 10px rgba(0,0,0,0.6); }
+  .ins-etiquette { position: absolute; left: 7%; right: 7%; top: 8%; height: 46%; border-radius: 2px; padding: 3% 5%;
+    display: grid; place-items: center; background: linear-gradient(#f7ecd4, #e2cfa6);
+    box-shadow: 0 2px 9px rgba(0,0,0,0.45); transform: rotate(-0.4deg); }
+  .ins-titre { font-family: "Caveat", cursive; font-weight: 700; line-height: 1.04; text-align: center;
+    font-size: clamp(14px, 2.2vw, 26px); color: #35407a; overflow: hidden; }
+  .ins-hublot { position: absolute; left: 11%; right: 11%; bottom: 17%; height: 27%; border-radius: 3px;
+    background: #09090b; box-shadow: inset 0 2px 7px rgba(0,0,0,0.95);
+    display: flex; align-items: center; justify-content: space-around; }
+  .ins-bobine { width: 26%; aspect-ratio: 1; border-radius: 50%;
+    background: radial-gradient(circle, #17171b 0 24%, #3a332a 25% 58%, #2a251e 59% 100%);
+    box-shadow: inset 0 0 7px rgba(0,0,0,0.9); animation: bobine 2.4s linear infinite; }
+  .ins-volet { position: absolute; left: 0; right: 0; bottom: 0; height: 10%;
+    background: linear-gradient(#2e2e33, #171719); border-top: 1px solid rgba(255,255,255,0.09); }
+
+  /* Le magnétoscope est un bloc plein qui descend jusque hors de la scène :
+     c'est lui qui cache la cassette une fois entrée. Une simple barre ne
+     suffirait pas — on verrait la cassette ressortir en dessous. */
+  .ins-magneto { position: absolute; left: 0; right: 0; top: 58%; bottom: 0; z-index: 2;
+    padding: 0 clamp(16px, 4vw, 46px);
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.014) 0 2px, transparent 2px 5px),
+      linear-gradient(#3a3a42 0 2px, #2a2a30 2px clamp(32px, 5.2vw, 46px),
+                      #1a1a1e clamp(32px, 5.2vw, 46px), #121214 55%, #0b0b0d);
+    box-shadow: 0 -16px 38px rgba(0,0,0,0.62), inset 0 1px 0 rgba(255,255,255,0.16),
+                inset 0 -1px 0 rgba(0,0,0,0.8);
+    animation: insClac var(--ins) ease both; }
+  /* Deux boutons et des ouïes : sans eux la façade n'est qu'un rectangle noir. */
+  .ins-boutons { position: absolute; right: clamp(14px, 3vw, 30px); bottom: 62%;
+    display: flex; gap: clamp(6px, 1vw, 9px); }
+  .ins-boutons i { width: clamp(9px, 1.4vw, 13px); aspect-ratio: 1; border-radius: 50%;
+    background: linear-gradient(#2e2e34, #17171a); box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 1px 2px rgba(0,0,0,0.7); }
+  .ins-ouies { position: absolute; left: clamp(14px, 3vw, 30px); bottom: 62%;
+    width: clamp(46px, 9vw, 88px); height: clamp(10px, 1.7vw, 15px);
+    background: repeating-linear-gradient(180deg, rgba(0,0,0,0.55) 0 2px, transparent 2px 4px);
+    border-radius: 1px; }
+  .ins-fente { position: absolute; left: 10%; right: 10%; top: clamp(9px, 1.6vw, 14px); height: clamp(9px, 1.6vw, 13px);
+    border-radius: 2px; background: #050506;
+    box-shadow: inset 0 4px 9px rgba(0,0,0,0.95), 0 1px 0 rgba(255,255,255,0.07); }
+  .ins-bandeau { display: flex; align-items: center; gap: clamp(8px, 1.6vw, 14px);
+    padding-top: clamp(34px, 5.8vw, 50px); }
+  .ins-temoin { width: clamp(7px, 1.2vw, 10px); aspect-ratio: 1; border-radius: 50%; flex: none;
+    animation: insTemoin var(--ins) steps(1) both; }
+  .ins-marque { font-family: "VT323", monospace; letter-spacing: 0.22em;
+    font-size: clamp(11px, 1.6vw, 15px); color: #6b5a42; }
+  .ins-compteur { margin-left: auto; font-family: "VT323", monospace; letter-spacing: 0.16em;
+    font-size: clamp(12px, 1.8vw, 17px); color: var(--ambre-clair); opacity: 0.85; }
+
+  /* L'afficheur de la machine : c'est là que se lit l'état, pas dans le vide. */
+  .ins-statut { position: relative; margin-top: clamp(9px, 1.5vw, 14px); height: 1.2em; text-align: center;
+    font-family: "VT323", monospace; letter-spacing: 0.3em; font-size: clamp(14px, 2vw, 20px); color: var(--phosphore); }
+  .ins-statut span { position: absolute; left: 0; right: 0; top: 0; }
+  .ins-statut .a { animation: insTexteA var(--ins) steps(1) both; }
+  .ins-statut .b { animation: insTexteB var(--ins) steps(1) both; }
+
+  /* 0 % = la cassette repose sur la fente. Elle tombe de haut, se pose, recule
+     d'un cheveu comme une main qui ajuste, puis s'enfonce jusqu'à passer sous
+     la ligne de la fente — donc derrière la machine, donc invisible. */
+  @keyframes insGlisse {
+    0%   { transform: translateY(-320%) rotateX(30deg) scale(0.93); opacity: 0; }
+    14%  { opacity: 1; }
+    44%  { transform: translateY(-2%) rotateX(5deg) scale(1); }
+    54%  { transform: translateY(-9%) rotateX(0deg) scale(1); }
+    100% { transform: translateY(108%) rotateX(0deg) scale(0.97); }
+  }
+  @keyframes insClac {
+    0%, 66% { transform: translateY(0); }
+    73%     { transform: translateY(3px); }
+    82%     { transform: translateY(0); }
+  }
+  @keyframes insTemoin {
+    0%   { background: #5a3a12; box-shadow: none; }
+    70%  { background: #e8a33d; box-shadow: 0 0 12px rgba(232,163,61,0.8); }
+    100% { background: #86dcc8; box-shadow: 0 0 12px rgba(134,220,200,0.9); }
+  }
+  @keyframes insTexteA { 0% { opacity: 1; } 70%, 100% { opacity: 0; } }
+  @keyframes insTexteB { 0%, 69% { opacity: 0; } 70%, 100% { opacity: 1; } }
+
+  /* Sur un écran étroit, la fenêtre 16/9 ne fait plus que ~190 px de haut :
+     la machine doit descendre pour laisser voir la cassette, et tout ce qui
+     n'est que décor (ouïes, boutons) s'efface. */
+  @media (max-width: 640px) {
+    .ins-zone { height: 64%; }
+    .ins-magneto { top: 64%; padding: 0 12px; }
+    .ins-cassette { width: min(56%, 210px); }
+    .ins-ouies, .ins-boutons { display: none; }
+    .ins-fente { left: 7%; right: 7%; top: 7px; height: 7px; }
+    .ins-bandeau { padding-top: 20px; gap: 7px; }
+    .ins-statut { margin-top: 5px; letter-spacing: 0.18em; }
+  }
+
+  /* Mouvement réduit : la mécanique reste lisible, mais plus rien ne bouge.
+     Le script raccourcit l'attente en parallèle. */
+  @media (prefers-reduced-motion: reduce) {
+    .ins-cassette { animation: none; transform: translateY(20%); opacity: 0.55; }
+    .ins-magneto { animation: none; }
+    .ins-bobine { animation: none; }
+    .ins-temoin { animation: none; background: #86dcc8; box-shadow: 0 0 12px rgba(134,220,200,0.9); }
+    .ins-statut .a { animation: none; opacity: 0; }
+    .ins-statut .b { animation: none; opacity: 1; }
+  }
 </style>
 </helmet>
 
@@ -297,6 +418,32 @@
   </div>
   </sc-if>
 
+  <!-- La lettre : facultative de bout en bout. Sans compte, le site marche
+       exactement pareil — c'est un supplément, pas un péage. -->
+  <section style="max-width: 1180px; margin: 0 auto; padding: 0 28px 56px;">
+    <div style="border: 1px solid rgba(255,215,154,0.16); border-radius: 5px; background: rgba(0,0,0,0.3); padding: clamp(20px, 3vw, 30px); display: flex; gap: 22px; align-items: center; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 260px;">
+        <div style="font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: 0.28em; font-size: 13px; color: #8a6a3c;">La lettre de la famille</div>
+        <p style="margin: 8px 0 0; font-size: 18px; line-height: 1.55; color: var(--papier-2); opacity: 0.85; max-width: 62ch;">{{ lettreTexte }}</p>
+        <sc-if value="{{ erreurCompte }}">
+          <p style="margin: 10px 0 0; font-size: 16px; color: var(--rec);">{{ erreurCompte }}</p>
+        </sc-if>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <sc-if value="{{ sansCompte }}">
+          <button onClick="{{ onConnexion }}" style="cursor: pointer; min-height: 48px; display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 3px; border: 1px solid rgba(255,215,154,0.3); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; font-size: 15px; color: #2a1d16; background: linear-gradient(var(--ambre-clair), var(--ambre));" style-hover="filter: brightness(1.08)">Se connecter avec Google</button>
+        </sc-if>
+        <sc-if value="{{ avecCompte }}">
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <span style="font-family: 'Caveat', cursive; font-size: 24px; color: var(--ambre-clair);">{{ compteNom }}</span>
+            <button onClick="{{ onAbonnement }}" style="cursor: pointer; min-height: 48px; display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 3px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; font-size: 15px; border: 1px solid {{ abonneBd }}; color: {{ abonneFg }}; background: {{ abonneBg }};"><span style="width: 9px; height: 9px; border-radius: 50%; background: {{ abonneLed }};"></span>{{ abonneTexte }}</button>
+            <button onClick="{{ onDeconnexion }}" style="cursor: pointer; min-height: 44px; padding: 10px 16px; border-radius: 3px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; font-size: 13px; color: var(--papier-2); background: #150e09; border: 1px solid rgba(255,215,154,0.2);" style-hover="color: var(--ambre-clair)">Se déconnecter</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </section>
+
   <footer style="border-top: 1px solid rgba(255,215,154,0.14); background: rgba(0,0,0,0.4); padding: 24px 28px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; font-family: 'VT323', monospace; font-size: 19px; letter-spacing: 0.14em; color: var(--papier-2);">
     <span style="opacity: 0.7;">MERCI DE REMBOBINER</span>
     <span style="opacity: 0.4;">·</span>
@@ -320,11 +467,33 @@
             <img src="{{ lecture.photoFond }}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.32; filter: sepia(0.45) saturate(0.8) contrast(1.05);">
           </sc-if>
           <sc-if value="{{ lecture.insertion }}">
-            <div style="position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(70% 70% at 50% 50%, rgba(26,43,40,0.82), rgba(7,11,10,0.94)); perspective: 800px;">
-              <div style="width: 42%; aspect-ratio: 16 / 10; border-radius: 4px; background: linear-gradient(150deg, #2b2b2e, #101012); box-shadow: 0 30px 60px rgba(0,0,0,0.8); animation: insertion 1.15s cubic-bezier(0.4, 0, 0.3, 1) both; display: grid; place-items: center;">
-                <span style="font-family: 'Caveat', cursive; font-size: 26px; color: var(--papier-2); opacity: 0.8; padding: 8%; text-align: center;">{{ lecture.titre }}</span>
+            <div class="ins-scene" style="--ins: {{ lecture.dureeInsertion }};">
+              <div class="ins-zone">
+                <div class="ins-cassette">
+                  <div class="ins-corps">
+                    <div class="ins-etiquette"><div class="ins-titre">{{ lecture.titre }}</div></div>
+                    <div class="ins-hublot">
+                      <div class="ins-bobine"></div>
+                      <div class="ins-bobine"></div>
+                    </div>
+                    <div class="ins-volet"></div>
+                  </div>
+                </div>
               </div>
-              <div style="position: absolute; bottom: 8%; font-family: 'VT323', monospace; font-size: 24px; letter-spacing: 0.3em; color: var(--phosphore); animation: clignote 0.7s steps(1) infinite;">INSERTION…</div>
+              <div class="ins-magneto">
+                <div class="ins-fente"></div>
+                <div class="ins-bandeau">
+                  <div class="ins-temoin"></div>
+                  <div class="ins-marque">VIDÉO</div>
+                  <div class="ins-compteur">{{ lecture.cassette }}</div>
+                </div>
+                <div class="ins-statut">
+                  <span class="a">INSERTION…</span>
+                  <span class="b">CHARGEMENT…</span>
+                </div>
+                <div class="ins-ouies"></div>
+                <div class="ins-boutons"><i></i><i></i></div>
+              </div>
             </div>
           </sc-if>
           <sc-if value="{{ lecture.sansLien }}">
@@ -335,7 +504,7 @@
               </div>
             </div>
           </sc-if>
-          <div style="position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; padding: 14px 18px; pointer-events: none; font-family: 'VT323', monospace; font-size: 21px; letter-spacing: 0.18em; color: var(--ambre-clair); text-shadow: 0 0 12px rgba(232,163,61,0.7);">
+          <div style="position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; gap: 10px; padding: clamp(7px, 1.6vw, 14px) clamp(9px, 2vw, 18px); pointer-events: none; font-family: 'VT323', monospace; font-size: clamp(13px, 2.2vw, 21px); line-height: 1.1; letter-spacing: 0.14em; white-space: nowrap; color: var(--ambre-clair); text-shadow: 0 0 12px rgba(232,163,61,0.7);">
             <span>▶ SP · {{ lecture.horodatage }}</span>
             <span>{{ lecture.cassette }}</span>
           </div>
@@ -449,9 +618,9 @@ function normaliser(brut) {
   };
 }
 
-// Le brouillon de la régie ne prend la main que s'il est plus récent que ce
-// qui est publié ici — sinon un vieux brouillon masquerait pour toujours le
-// contenu fraîchement recopié dans ce fichier.
+// Au démarrage, avant que le réseau ait répondu : le bloc écrit dans ce
+// fichier, éventuellement coiffé par un brouillon local plus récent. La page
+// s'affiche donc immédiatement, et continue de s'afficher hors ligne.
 function chargerDonnees() {
   const publie = normaliser(SEED);
   try {
@@ -463,6 +632,24 @@ function chargerDonnees() {
   } catch (e) {}
   return publie;
 }
+
+// Puis la base prend le relais : c'est elle qui fait foi dès qu'elle répond.
+// Le bloc de ce fichier n'est plus qu'un filet pour les cas où elle ne répond
+// pas — réseau coupé, projet en pause, page ouverte depuis un fichier local.
+async function chargerDepuisNuage() {
+  const distant = await Nuage.lireCatalogue();
+  return distant ? normaliser(distant) : null;
+}
+
+// Le temps que met la cassette à entrer. Une seule valeur : le script attend
+// ce délai avant de lancer la vidéo, et la passe au CSS qui cale ses
+// animations dessus. Qui demande moins de mouvement n'attend presque pas.
+const INSERTION_MS = 1800;
+function mouvementReduit() {
+  try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; }
+  catch (e) { return false; }
+}
+function dureeInsertion() { return mouvementReduit() ? 260 : INSERTION_MS; }
 
 function idYoutube(lien) {
   if (!lien) return "";
@@ -482,7 +669,8 @@ class Component extends DCLogic {
     vue: "frise",
     annees: [], personnes: [], evenements: [], cassettes: [],
     favorisSeuls: false, favoris: [],
-    lecture: null, phase: "insert"
+    lecture: null, phase: "insert",
+    compte: null, abonne: false, occupeCompte: false, erreurCompte: ""
   };
 
   componentDidMount() {
@@ -498,6 +686,50 @@ class Component extends DCLogic {
       this.setState({ donnees: chargerDonnees() });
     };
     window.addEventListener("storage", this._sync);
+
+    const retour = Nuage.recupererRetourGoogle();
+    if (retour && retour.erreur) this.setState({ erreurCompte: retour.erreur });
+    this.reprendreCompte();
+
+    chargerDepuisNuage().then((d) => {
+      if (!d) return;
+      // Un brouillon local plus récent que la base reste prioritaire : on est
+      // peut-être en train de le saisir dans la régie, dans l'autre onglet.
+      this.setState((s) => (d.maj >= s.donnees.maj ? { donnees: d } : null));
+    }).catch(() => {
+      // Base injoignable : le bloc de ce fichier fait le travail, en silence.
+    });
+  }
+
+  async reprendreCompte() {
+    try {
+      const s = await Nuage.session();
+      if (!s) { this.setState({ compte: null, abonne: false }); return; }
+      this.setState({ compte: s.utilisateur });
+      const a = await Nuage.monAbonnement();
+      this.setState({ abonne: !!a });
+    } catch (e) {
+      this.setState({ compte: null, abonne: false });
+    }
+  }
+
+  async basculeAbonnement() {
+    const s = this.state;
+    if (!s.compte || s.occupeCompte) return;
+    this.setState({ occupeCompte: true, erreurCompte: "" });
+    try {
+      if (s.abonne) { await Nuage.desabonner(); this.setState({ abonne: false }); }
+      else { await Nuage.abonner(); this.setState({ abonne: true }); }
+    } catch (e) {
+      this.setState({ erreurCompte: String(e.message || e) });
+    }
+    this.setState({ occupeCompte: false });
+  }
+
+  async seDeconnecter() {
+    this.setState({ occupeCompte: true });
+    try { await Nuage.deconnexion(); } catch (e) {}
+    this.setState({ compte: null, abonne: false, occupeCompte: false });
   }
   componentWillUnmount() {
     window.removeEventListener("keydown", this._key);
@@ -510,8 +742,9 @@ class Component extends DCLogic {
   lire(v) {
     if (!v) return;
     clearTimeout(this._t);
+    const d = dureeInsertion();
     this.setState({ lecture: v, phase: "insert" });
-    this._t = setTimeout(() => this.setState({ phase: "play" }), 1150);
+    this._t = setTimeout(() => this.setState({ phase: "play" }), d);
   }
   ejecter() { clearTimeout(this._t); this.setState({ lecture: null, phase: "insert" }); }
 
@@ -668,6 +901,26 @@ class Component extends DCLogic {
       },
       onVerrouiller: () => this.setState({ deverrouille: false, lecture: null }),
 
+      // ——— La lettre. Se connecter ne déverrouille rien et ne cache rien :
+      //      c'est uniquement pour recevoir des nouvelles. ———
+      sansCompte: !s.compte,
+      avecCompte: !!s.compte,
+      compteNom: s.compte ? s.compte.nom : "",
+      erreurCompte: s.erreurCompte,
+      lettreTexte: !s.compte
+        ? "De temps en temps, un mot quand de nouvelles bandes sortent du carton. Connectez-vous avec Google si vous voulez le recevoir — le site s'ouvre très bien sans, avec le seul mot de passe de la maison."
+        : (s.abonne
+            ? "Vous recevrez un mot à chaque fournée de nouvelles bandes. Vous pouvez arrêter quand vous voulez."
+            : "Vous êtes connecté, mais pas encore inscrit à la lettre."),
+      onConnexion: () => Nuage.connexionGoogle(),
+      onDeconnexion: () => this.seDeconnecter(),
+      onAbonnement: () => this.basculeAbonnement(),
+      abonneTexte: s.occupeCompte ? "Un instant…" : (s.abonne ? "Inscrit à la lettre" : "Recevoir la lettre"),
+      abonneBg: s.abonne ? "rgba(134,220,200,0.16)" : "#150e09",
+      abonneFg: s.abonne ? "var(--phosphore)" : "var(--papier-2)",
+      abonneBd: s.abonne ? "rgba(134,220,200,0.55)" : "rgba(255,215,154,0.22)",
+      abonneLed: s.abonne ? "var(--phosphore)" : "#3a2a1c",
+
       onglets: onglets,
       vueFrise: s.vue === "frise",
       vuePersonnes: s.vue === "personnes",
@@ -722,6 +975,7 @@ class Component extends DCLogic {
         note: lect.note,
         photoFond: enLecture ? null : (lect.photo || null),
         insertion: s.phase === "insert",
+        dureeInsertion: dureeInsertion() + "ms",
         pretALire: enLecture,
         embed: id ? "https://www.youtube-nocookie.com/embed/" + id + "?rel=0&modestbranding=1&playsinline=1&autoplay=1" : null,
         sansLien: s.phase === "play" && !id

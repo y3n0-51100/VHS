@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="./nuage.js"></script>
 </head>
 <body>
 <x-dc>
@@ -473,7 +474,7 @@
     <div>
       <div class="r-legende">Le tiroir à cassettes</div>
       <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: clamp(42px, 6vw, 74px); line-height: 0.9; margin: 4px 0 8px; color: var(--ambre-clair);">Publier &amp; sauvegarder</h2>
-      <p style="margin: 0; font-size: 18px; line-height: 1.6; color: var(--papier-2); opacity: 0.8; max-width: 70ch;">Tout ce que vous saisissez ici vit dans <em>ce</em> navigateur. Pour que la famille le voie, il faut recopier le bloc de données dans le fichier du site — c'est l'étape « publier ».</p>
+      <p style="margin: 0; font-size: 18px; line-height: 1.6; color: var(--papier-2); opacity: 0.8; max-width: 70ch;">Ce que vous saisissez vit d'abord dans <em>ce</em> navigateur. Un clic sur <strong>Publier</strong> l'envoie à la base : le site est à jour aussitôt, pour tout le monde.</p>
     </div>
 
     <div class="r-panneau" style="display: flex; flex-direction: column; gap: 14px;">
@@ -481,37 +482,95 @@
         <span class="r-legende">1 · Publier vers le site</span>
         <span style="flex: 1; min-width: 20px; height: 1px; background: rgba(255,215,154,0.14);"></span>
         <button onClick="{{ onSansPhotos }}" class="r-bouton" style="border-color: {{ sansPhotosBd }}; background: {{ sansPhotosBg }}; color: {{ sansPhotosFg }};"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{ sansPhotosLed }};"></span>Sans les photos importées</button>
-        <button onClick="{{ onGenerer }}" class="r-bouton-primaire">⎘ Fabriquer le bloc</button>
       </div>
-      <ol style="margin: 0; padding-left: 22px; font-size: 17px; line-height: 1.7; color: var(--papier-2);">
-        <li>Cliquez sur <strong>Fabriquer le bloc</strong>, puis sur <strong>Copier</strong>.</li>
-        <li>Ouvrez <span class="r-mono" style="color: var(--phosphore);">{{ nomFichierSite }}</span>.</li>
-        <li>Remplacez tout ce qui se trouve entre <span class="r-mono" style="color: var(--phosphore);">/*DONNEES-DEBUT*/</span> et <span class="r-mono" style="color: var(--phosphore);">/*DONNEES-FIN*/</span> — marqueurs compris — par ce que vous venez de copier.</li>
-      </ol>
+
+      <sc-if value="{{ sansCompte }}">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="r-aide">Publier demande de prouver que c'est bien vous. Le code de la régie n'écarte que les curieux de ce navigateur ; la base, elle, veut un vrai compte.</div>
+          <button onClick="{{ onConnexion }}" class="r-bouton-primaire" style="align-self: flex-start;">Se connecter avec Google</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ compteNonAdmin }}">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="width: 9px; height: 9px; border-radius: 50%; background: var(--rec);"></span>
+            <span>Connecté comme <strong>{{ compteEmail }}</strong></span>
+            <button onClick="{{ onDeconnexion }}" class="r-bouton" style="margin-left: auto;">Se déconnecter</button>
+          </div>
+          <div class="r-aide">Ce compte n'a pas le droit de publier. Ajoutez son adresse à la table <span class="r-mono">admins</span> dans Supabase, puis rechargez cette page.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ peutPublier }}">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="width: 9px; height: 9px; border-radius: 50%; background: var(--phosphore); box-shadow: 0 0 10px var(--phosphore);"></span>
+            <span>Connecté comme <strong>{{ compteEmail }}</strong></span>
+            <button onClick="{{ onDeconnexion }}" class="r-bouton" style="margin-left: auto;">Se déconnecter</button>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button onClick="{{ onPublier }}" class="r-bouton-primaire" style="font-size: 19px; padding: 12px 26px;">{{ textePublier }}</button>
+            <span class="r-aide">{{ etatPublication }}</span>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ admin }}">
+    <div class="r-panneau" style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span class="r-legende">2 · La lettre</span>
+        <span style="flex: 1; min-width: 20px; height: 1px; background: rgba(255,215,154,0.14);"></span>
+        <button onClick="{{ onRelireAbonnes }}" class="r-bouton">↻ Relire</button>
+        <button onClick="{{ onExporterAbonnes }}" class="r-bouton-primaire">⤓ Exporter en CSV</button>
+      </div>
+      <div class="r-aide">{{ resumeAbonnes }}</div>
+      <sc-if value="{{ aDesAbonnes }}">
+        <div class="r-scroll" style="max-height: 260px; overflow: auto; border: 1px solid rgba(255,215,154,0.14); border-radius: 3px;">
+          <sc-for list="{{ listeAbonnes }}" as="a" hint-placeholder-count="3">
+            <div style="display: flex; gap: 12px; align-items: baseline; padding: 9px 13px; border-bottom: 1px solid rgba(255,215,154,0.08);">
+              <span class="r-mono" style="color: var(--phosphore);">{{ a.email }}</span>
+              <span style="opacity: 0.75;">{{ a.nom }}</span>
+              <span class="r-mono" style="margin-left: auto; opacity: 0.55; font-size: 15px;">{{ a.date }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <div class="r-panneau" style="display: flex; flex-direction: column; gap: 14px;">
+      <span class="r-legende">3 · Sauvegarder le carton</span>
+      <div class="r-aide">Un fichier JSON avec tout : les bandes, les prénoms, les photos, les réglages. Rangez-le à côté de vos vidéos.</div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button onClick="{{ onExporter }}" class="r-bouton-primaire">⤓ Exporter le JSON</button>
+        <input type="file" accept="application/json,.json" id="r-import-json" onChange="{{ onImporterFichier }}" style="display: none;">
+        <button onClick="{{ onChoisirImport }}" class="r-bouton">⤒ Importer un JSON</button>
+        <button onClick="{{ onRelireSite }}" class="r-bouton">↻ Relire le contenu publié</button>
+      </div>
+    </div>
+
+    <div class="r-panneau" style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span class="r-legende">4 · Secours : figer dans le fichier</span>
+        <span style="flex: 1; min-width: 20px; height: 1px; background: rgba(255,215,154,0.14);"></span>
+        <button onClick="{{ onGenerer }}" class="r-bouton">⎘ Fabriquer le bloc</button>
+      </div>
+      <div class="r-aide">L'ancienne méthode, gardée pour les mauvais jours : si la base ne répond plus, ce bloc recopié entre <span class="r-mono">/*DONNEES-DEBUT*/</span> et <span class="r-mono">/*DONNEES-FIN*/</span> dans <span class="r-mono" style="color: var(--phosphore);">{{ nomFichierSite }}</span> fait réapparaître le contenu. En temps normal, vous n'en avez pas besoin.</div>
       <sc-if value="{{ codeVisible }}">
         <div style="display: flex; flex-direction: column; gap: 10px;">
           <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <button onClick="{{ onCopierCode }}" class="r-bouton-primaire">⧉ Copier</button>
             <span class="r-aide">{{ tailleCode }}</span>
           </div>
-          <textarea value="{{ code }}" onChange="{{ rien }}" readonly class="r-zone r-scroll" style="min-height: 260px; font-family: 'VT323', monospace; font-size: 16px; line-height: 1.4; letter-spacing: 0.02em; color: var(--phosphore);"></textarea>
+          <textarea value="{{ code }}" onChange="{{ rien }}" readonly class="r-zone r-scroll" style="min-height: 220px; font-family: 'VT323', monospace; font-size: 16px; line-height: 1.4; letter-spacing: 0.02em; color: var(--phosphore);"></textarea>
         </div>
       </sc-if>
     </div>
 
-    <div class="r-panneau" style="display: flex; flex-direction: column; gap: 14px;">
-      <span class="r-legende">2 · Sauvegarder le carton</span>
-      <div class="r-aide">Un fichier JSON avec tout : les bandes, les prénoms, les photos, les réglages. Rangez-le à côté de vos vidéos.</div>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button onClick="{{ onExporter }}" class="r-bouton-primaire">⤓ Exporter le JSON</button>
-        <input type="file" accept="application/json,.json" id="r-import-json" onChange="{{ onImporterFichier }}" style="display: none;">
-        <button onClick="{{ onChoisirImport }}" class="r-bouton">⤒ Importer un JSON</button>
-        <button onClick="{{ onRelireSite }}" class="r-bouton">↻ Relire le site publié</button>
-      </div>
-    </div>
-
     <div class="r-panneau" style="display: flex; flex-direction: column; gap: 14px; border: 1px solid rgba(216,69,47,0.3);">
-      <span class="r-legende" style="color: #f0a294;">3 · Repartir de zéro</span>
+      <span class="r-legende" style="color: #f0a294;">5 · Repartir de zéro</span>
       <div class="r-aide">Efface le brouillon de ce navigateur. Le site — et la régie — reviennent à ce qui est publié dans le fichier. Exportez d'abord si vous n'êtes pas sûr.</div>
       <button onClick="{{ onVider }}" class="r-bouton r-bouton-danger" style="align-self: flex-start;">{{ texteVider }}</button>
     </div>
@@ -694,10 +753,14 @@ class Component extends DCLogic {
     confirmVider: false,
     code: "",
     codeVisible: false,
-    sansPhotos: false
+    sansPhotos: false,
+    compte: null, admin: false, enPublication: false, abonnes: []
   };
 
   componentDidMount() {
+    const retour = Nuage.recupererRetourGoogle();
+    if (retour && retour.erreur) this.crier("Connexion refusée : " + retour.erreur);
+    this.reprendreCompte();
     this.chargerSite(false);
     this._echap = (e) => { if (e.key === "Escape") this.setState({ confirmBande: -1, confirmPersonne: -1, confirmVider: false }); };
     window.addEventListener("keydown", this._echap);
@@ -707,23 +770,115 @@ class Component extends DCLogic {
     clearTimeout(this._toast);
   }
 
-  // ——— Le fichier du site sert de source quand aucun brouillon n'existe. ———
+  // ——— Le compte ———
+  async reprendreCompte() {
+    try {
+      const s = await Nuage.session();
+      if (!s) { this.setState({ compte: null, admin: false, abonnes: [] }); return; }
+      this.setState({ compte: s.utilisateur });
+      const a = await Nuage.estAdmin();
+      this.setState({ admin: a });
+      if (a) this.chargerAbonnes();
+    } catch (e) {
+      this.setState({ compte: null, admin: false });
+    }
+  }
+
+  async seDeconnecter() {
+    try { await Nuage.deconnexion(); } catch (e) {}
+    this.setState({ compte: null, admin: false, abonnes: [] });
+    this.crier("Déconnecté");
+  }
+
+  async chargerAbonnes() {
+    try { this.setState({ abonnes: await Nuage.listerAbonnes() }); }
+    catch (e) { this.setState({ abonnes: [] }); }
+  }
+
+  // ——— Ce qui est publié vit dans la base. Le fichier du site n'est plus
+  //      qu'un filet : on ne s'y replie que si la base ne répond pas. ———
   chargerSite(bruyant) {
+    Nuage.lireCatalogue()
+      .then((brut) => {
+        if (!brut) throw new Error("catalogue vide");
+        const seed = normaliser(brut);
+        this.setState((s) => (s.aUnBrouillon ? { publie: seed } : { publie: seed, donnees: seed }));
+        if (bruyant) this.crier("Contenu publié relu depuis la base");
+      })
+      .catch(() => this.chargerSiteDepuisFichier(bruyant));
+  }
+
+  chargerSiteDepuisFichier(bruyant) {
     fetch(encodeURI(FICHIER_SITE), { cache: "no-store" })
       .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
       .then((source) => {
         const seed = extraireSeed(source);
         if (!seed) throw new Error("bloc de données introuvable");
-        this.setState((s) => {
-          const rien = !s.aUnBrouillon;
-          return rien ? { publie: seed, donnees: seed } : { publie: seed };
-        });
-        if (bruyant) this.crier("Contenu publié relu depuis le site");
+        this.setState((s) => (s.aUnBrouillon ? { publie: seed } : { publie: seed, donnees: seed }));
+        this.crier(bruyant ? "Base injoignable — relu depuis le fichier du site" : "Base injoignable — contenu lu dans le fichier");
       })
       .catch(() => {
-        if (bruyant) this.crier("Impossible de lire le fichier du site");
-        else if (!this.state.aUnBrouillon) this.crier("Site illisible — importez un JSON pour démarrer");
+        if (bruyant) this.crier("Ni la base ni le fichier du site ne répondent");
+        else if (!this.state.aUnBrouillon) this.crier("Rien à lire — importez un JSON pour démarrer");
       });
+  }
+
+  // ——— Publier : une seule action, plus de copier-coller. ———
+  async publier() {
+    if (this.state.enPublication) return;
+    const s = await Nuage.session();
+    if (!s) { this.crier("Connectez-vous avec Google pour publier"); return; }
+    this.setState({ enPublication: true });
+    try {
+      await Nuage.ecrireCatalogue(this.donneesAPublier());
+      this.setState((st) => ({ publie: st.donnees, enPublication: false }));
+      this.crier("Publié — le site est à jour");
+    } catch (e) {
+      this.setState({ enPublication: false });
+      this.crier(String(e.message || e));
+    }
+  }
+
+  // Les photos importées pèsent lourd ; l'option les retire de ce qu'on envoie.
+  donneesAPublier() {
+    const d = this.state.donnees;
+    if (!this.state.sansPhotos) return d;
+    const nue = (x) => (String(x || "").slice(0, 5) === "data:" ? "" : x);
+    return Object.assign({}, d, {
+      personnes: d.personnes.map((p) => Object.assign({}, p, { photo: nue(p.photo) })),
+      videos: d.videos.map((v) => Object.assign({}, v, { photo: nue(v.photo) }))
+    });
+  }
+
+  // Dit en une phrase où en est le brouillon par rapport à ce qui est en ligne.
+  etatPublication() {
+    const s = this.state;
+    if (s.enPublication) return "envoi en cours…";
+    if (!s.publie) return "contenu publié inconnu pour l'instant";
+    const enRetard = (s.donnees.maj || "") > (s.publie.maj || "");
+    if (!enRetard) return "le site affiche déjà ce que vous voyez ici";
+    const n = s.donnees.videos.length;
+    return "brouillon non publié · " + n + (n > 1 ? " bandes" : " bande");
+  }
+
+  exporterAbonnes() {
+    const l = this.state.abonnes || [];
+    if (!l.length) { this.crier("Aucun abonné à exporter"); return; }
+    const echapper = (v) => {
+      const t = String(v == null ? "" : v);
+      return /[",;\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+    };
+    const lignes = [["email", "nom", "consenti_le"].join(";")]
+      .concat(l.map((a) => [a.email, a.nom, a.consenti_le].map(echapper).join(";")));
+    // Le BOM évite qu'Excel massacre les accents à l'ouverture.
+    const blob = new Blob(["﻿" + lignes.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "abonnes-" + new Date().toISOString().slice(0, 10) + ".csv";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    this.crier(l.length + " abonné" + (l.length > 1 ? "s" : "") + " exporté" + (l.length > 1 ? "s" : ""));
   }
 
   crier(texte) {
@@ -1216,6 +1371,30 @@ class Component extends DCLogic {
       onRelireSite: () => this.chargerSite(true),
       onVider: () => this.vider(),
       texteVider: s.confirmVider ? "Confirmer l'effacement ?" : "⌫ Effacer le brouillon local",
+
+      // ——— Le compte, la publication, la lettre ———
+      sansCompte: !s.compte,
+      compteNonAdmin: !!s.compte && !s.admin,
+      peutPublier: !!s.compte && s.admin,
+      admin: s.admin,
+      compteEmail: s.compte ? s.compte.email : "",
+      onConnexion: () => Nuage.connexionGoogle(),
+      onDeconnexion: () => this.seDeconnecter(),
+      onPublier: () => this.publier(),
+      textePublier: s.enPublication ? "Publication…" : "▲ Publier maintenant",
+      etatPublication: this.etatPublication(),
+
+      onRelireAbonnes: () => this.chargerAbonnes(),
+      onExporterAbonnes: () => this.exporterAbonnes(),
+      aDesAbonnes: (s.abonnes || []).length > 0,
+      resumeAbonnes: (s.abonnes || []).length
+        ? (s.abonnes.length === 1 ? "1 personne reçoit la lettre." : s.abonnes.length + " personnes reçoivent la lettre.")
+        : "Personne pour l'instant. La case se propose sur le site, aux visiteurs connectés avec Google.",
+      listeAbonnes: (s.abonnes || []).map((a) => ({
+        email: a.email,
+        nom: a.nom || "",
+        date: (a.consenti_le || "").slice(0, 10).split("-").reverse().join("/")
+      })),
 
       message: s.message
     };
