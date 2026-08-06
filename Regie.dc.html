@@ -504,6 +504,82 @@
   </div>
   </sc-if>
 
+  <!-- ─────────── Onglet : la lettre ─────────── -->
+  <sc-if value="{{ vueLettre }}">
+  <div style="max-width: 1040px; margin: 0 auto; padding: 32px 24px 90px; display: flex; flex-direction: column; gap: 20px;">
+    <div>
+      <div class="r-legende">Des nouvelles du carton</div>
+      <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: clamp(42px, 6vw, 74px); line-height: 0.9; margin: 4px 0 8px; color: var(--ambre-clair);">La lettre</h2>
+      <p style="margin: 0; font-size: 18px; line-height: 1.6; color: var(--papier-2); opacity: 0.8; max-width: 70ch;">{{ resumeLettre }}</p>
+    </div>
+
+    <sc-if value="{{ sansAbonne }}">
+      <div class="r-panneau">
+        <div class="r-aide">Personne n'est encore inscrit. La case se propose sur le site, en haut, aux visiteurs connectés avec Google — elle n'apparaîtra qu'une fois la connexion Google activée. Vous pouvez écrire la lettre dès maintenant : elle vous attendra ici.</div>
+      </div>
+    </sc-if>
+
+    <div class="r-panneau" style="display: flex; flex-direction: column; gap: 14px;">
+      <span class="r-legende">1 · Écrire</span>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <span class="r-aide">Objet</span>
+        <input value="{{ lettreObjet }}" onChange="{{ onLettreObjet }}" placeholder="Cinq bandes de plus dans le carton" class="r-saisie">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <span class="r-aide">Le mot</span>
+          <span style="flex: 1; min-width: 20px;"></span>
+          <span class="r-aide">annoncer les</span>
+          <input value="{{ lettreCombien }}" onChange="{{ onLettreCombien }}" inputmode="numeric" class="r-saisie r-mono" style="width: 62px; text-align: center;">
+          <span class="r-aide">dernières</span>
+          <button onClick="{{ onInsererBandes }}" class="r-bouton">＋ Les ajouter au texte</button>
+        </div>
+        <textarea value="{{ lettreCorps }}" onChange="{{ onLettreCorps }}" placeholder="Bonjour à tous,&#10;&#10;Quelques bandes de plus sont sorties du carton…" class="r-zone r-scroll" style="min-height: 260px; font-size: 17px; line-height: 1.6;"></textarea>
+        <div class="r-aide">{{ tailleLettre }} · le brouillon reste dans ce navigateur, il ne part nulle part tant que vous n'envoyez pas.</div>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button onClick="{{ onLettreAdresseSite }}" class="r-bouton">🔗 Ajouter l'adresse du site</button>
+        <button onClick="{{ onLettreVider }}" class="r-bouton r-bouton-danger">⌫ Effacer le brouillon</button>
+      </div>
+    </div>
+
+    <div class="r-panneau" style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span class="r-legende">2 · Envoyer</span>
+        <span style="flex: 1; min-width: 20px; height: 1px; background: rgba(255,215,154,0.14);"></span>
+        <span class="r-aide">{{ compteAbonnes }}</span>
+      </div>
+      <div class="r-aide">Le site n'envoie pas de courrier lui-même. Il prépare la lettre et vous la passez à votre messagerie — les adresses partent en <strong>copie cachée</strong>, personne ne voit celles des autres.</div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button onClick="{{ onOuvrirMessagerie }}" class="r-bouton-primaire">✉ Ouvrir dans ma messagerie</button>
+        <button onClick="{{ onCopierAdresses }}" class="r-bouton">⧉ Copier les adresses</button>
+        <button onClick="{{ onCopierLettre }}" class="r-bouton">⧉ Copier la lettre</button>
+      </div>
+      <div class="r-aide">Si votre messagerie s'ouvre vide, ou si la lettre est longue : copiez les adresses dans le champ <em>Cci</em>, puis la lettre dans le corps du message.</div>
+    </div>
+
+    <sc-if value="{{ aDesAbonnes }}">
+    <div class="r-panneau" style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span class="r-legende">3 · Qui la reçoit</span>
+        <span style="flex: 1; min-width: 20px; height: 1px; background: rgba(255,215,154,0.14);"></span>
+        <button onClick="{{ onRelireAbonnes }}" class="r-bouton">↻ Relire</button>
+        <button onClick="{{ onExporterAbonnes }}" class="r-bouton">⤓ Exporter en CSV</button>
+      </div>
+      <div class="r-scroll" style="max-height: 260px; overflow: auto; border: 1px solid rgba(255,215,154,0.14); border-radius: 3px;">
+        <sc-for list="{{ listeAbonnes }}" as="a" hint-placeholder-count="3">
+          <div style="display: flex; gap: 12px; align-items: baseline; padding: 9px 13px; border-bottom: 1px solid rgba(255,215,154,0.08);">
+            <span class="r-mono" style="color: var(--phosphore);">{{ a.email }}</span>
+            <span style="opacity: 0.75;">{{ a.nom }}</span>
+            <span class="r-mono" style="margin-left: auto; opacity: 0.55; font-size: 15px;">{{ a.date }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
   <!-- ─────────── Onglet : sauvegarde ─────────── -->
   <sc-if value="{{ vueSauvegarde }}">
   <div style="max-width: 1040px; margin: 0 auto; padding: 32px 24px 90px; display: flex; flex-direction: column; gap: 20px;">
@@ -680,6 +756,7 @@ const REGLAGES_DEFAUT = {
 
 // Version mobile / version bureau. Même mécanique et même clé que le site :
 // le choix fait dans l'une des deux pages vaut pour l'autre.
+const CLE_LETTRE = "bandes-famille-lettre";
 const CLE_VUE = "bandes-famille-vue";
 const SEUIL_COMPACT = 720;
 
@@ -700,6 +777,15 @@ function appliquerVue(vue) {
     meta.setAttribute("content", vue === "bureau" ? "width=1280" : "width=device-width, initial-scale=1");
   }
   return compact;
+}
+
+const LETTRE_VIDE = { objet: "", corps: "", combien: 5 };
+
+function lireLettre() {
+  try {
+    const b = JSON.parse(localStorage.getItem(CLE_LETTRE) || "null");
+    return b && typeof b === "object" ? Object.assign({}, LETTRE_VIDE, b) : Object.assign({}, LETTRE_VIDE);
+  } catch (e) { return Object.assign({}, LETTRE_VIDE); }
 }
 
 function txt(v) { return typeof v === "string" ? v : (v == null ? "" : String(v)); }
@@ -831,7 +917,8 @@ class Component extends DCLogic {
     codeVisible: false,
     sansPhotos: false,
     compte: null, admin: false, enPublication: false, abonnes: [], googleActif: false,
-    miseEnPage: vueChoisie(), compact: false
+    miseEnPage: vueChoisie(), compact: false,
+    lettre: lireLettre()
   };
 
   componentDidMount() {
@@ -940,6 +1027,61 @@ class Component extends DCLogic {
       personnes: d.personnes.map((p) => Object.assign({}, p, { photo: nue(p.photo) })),
       videos: d.videos.map((v) => Object.assign({}, v, { photo: nue(v.photo) }))
     });
+  }
+
+  // ——— La lettre ———
+  // Le brouillon reste dans ce navigateur : une lettre s'écrit en plusieurs
+  // fois, et il n'y a aucune raison de l'envoyer à la base pour ça.
+  patchLettre(bout) {
+    const l = Object.assign({}, this.state.lettre, bout);
+    try { localStorage.setItem(CLE_LETTRE, JSON.stringify(l)); } catch (e) {}
+    this.setState({ lettre: l });
+  }
+
+  insererLesBandes() {
+    const d = this.state.donnees;
+    const n = Math.max(1, Math.min(50, Number(this.state.lettre.combien) || 5));
+    // Les dernières saisies sont en fin de liste : c'est l'ordre d'ajout.
+    const dernieres = d.videos.slice(-n).reverse();
+    if (!dernieres.length) { this.crier("Aucune bande à annoncer"); return; }
+    const lignes = dernieres.map((v) => {
+      const situe = [v.mois, v.annee || null].filter(Boolean).join(" ");
+      return "• " + v.titre + (situe ? " (" + situe + ")" : "");
+    });
+    const bloc = lignes.join("\n");
+    const corps = this.state.lettre.corps;
+    this.patchLettre({ corps: corps ? corps.replace(/\s*$/, "") + "\n\n" + bloc + "\n" : bloc + "\n" });
+    this.crier(dernieres.length + " bande" + (dernieres.length > 1 ? "s ajoutées" : " ajoutée") + " au texte");
+  }
+
+  adressesAbonnes() {
+    return (this.state.abonnes || []).map((a) => a.email).filter(Boolean);
+  }
+
+  // Ouvre le logiciel de messagerie avec tout pré-rempli. Les adresses vont en
+  // copie cachée : personne ne doit découvrir le carnet d'adresses de la famille.
+  ouvrirMessagerie() {
+    const adr = this.adressesAbonnes();
+    if (!adr.length) { this.crier("Aucun abonné à qui écrire"); return; }
+    const l = this.state.lettre;
+    const lien = "mailto:?bcc=" + encodeURIComponent(adr.join(","))
+      + "&subject=" + encodeURIComponent(l.objet || "")
+      + "&body=" + encodeURIComponent(l.corps || "");
+    // Passé ~1800 caractères, plusieurs clients tronquent l'adresse sans
+    // prévenir : mieux vaut le dire que d'envoyer une lettre amputée.
+    if (lien.length > 1800) {
+      this.crier("Lettre trop longue pour ce raccourci — utilisez les deux boutons « Copier »");
+      return;
+    }
+    // Un clic sur une ancre plutôt qu'une affectation de location : les
+    // navigateurs traitent mieux le mailto ainsi, et rien n'est bloqué au
+    // motif d'une navigation non sollicitée.
+    const a = document.createElement("a");
+    a.href = lien;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => a.remove(), 0);
   }
 
   // Dit en une phrase où en est le brouillon par rapport à ce qui est en ligne.
@@ -1360,6 +1502,7 @@ class Component extends DCLogic {
       { c: "personnes", nom: "Les nôtres" },
       { c: "reglages", nom: "Réglages" },
       { c: "notice", nom: "Notice" },
+      { c: "lettre", nom: "La lettre" },
       { c: "sauvegarde", nom: "Sauvegarde" }
     ].map((o) => {
       const actif = s.onglet === o.c;
@@ -1394,6 +1537,7 @@ class Component extends DCLogic {
       vueReglages: s.onglet === "reglages",
       vueTextes: s.onglet === "reglages" || s.onglet === "notice",
       vueSauvegarde: s.onglet === "sauvegarde",
+      vueLettre: s.onglet === "lettre",
 
       compteur: String(d.videos.length).padStart(4, "0"),
       nbTrous: String(nbTrous),
@@ -1486,6 +1630,36 @@ class Component extends DCLogic {
       onPublier: () => this.publier(),
       textePublier: s.enPublication ? "Publication…" : "▲ Publier maintenant",
       etatPublication: this.etatPublication(),
+
+      // ——— L'atelier de rédaction ———
+      lettreObjet: s.lettre.objet,
+      lettreCorps: s.lettre.corps,
+      lettreCombien: String(s.lettre.combien),
+      onLettreObjet: (e) => this.patchLettre({ objet: e.target.value }),
+      onLettreCorps: (e) => this.patchLettre({ corps: e.target.value }),
+      onLettreCombien: (e) => this.patchLettre({ combien: e.target.value.replace(/\D/g, "").slice(0, 2) }),
+      onInsererBandes: () => this.insererLesBandes(),
+      onLettreAdresseSite: () => {
+        const url = window.location.origin + window.location.pathname.replace(/[^/]*$/, "");
+        const c = s.lettre.corps;
+        this.patchLettre({ corps: (c ? c.replace(/\s*$/, "") + "\n\n" : "") + "Tout est ici : " + url + "\n" });
+      },
+      onLettreVider: () => { this.patchLettre(Object.assign({}, LETTRE_VIDE)); this.crier("Brouillon de la lettre effacé"); },
+      tailleLettre: (s.lettre.corps.length || 0) + " caractères",
+      resumeLettre: (s.abonnes || []).length
+        ? "Écrivez le mot, ajoutez les dernières bandes d'un clic, puis passez-le à votre messagerie. Les adresses partent en copie cachée."
+        : "Écrivez le mot dès maintenant : il vous attendra ici jusqu'à ce que quelqu'un s'inscrive.",
+      compteAbonnes: (s.abonnes || []).length
+        ? (s.abonnes.length === 1 ? "1 destinataire" : s.abonnes.length + " destinataires")
+        : "aucun destinataire",
+      sansAbonne: (s.abonnes || []).length === 0,
+      onOuvrirMessagerie: () => this.ouvrirMessagerie(),
+      onCopierAdresses: () => {
+        const a = this.adressesAbonnes();
+        if (!a.length) { this.crier("Aucun abonné"); return; }
+        this.copier(a.join(", "));
+      },
+      onCopierLettre: () => this.copier((s.lettre.objet ? s.lettre.objet + "\n\n" : "") + s.lettre.corps),
 
       onRelireAbonnes: () => this.chargerAbonnes(),
       onExporterAbonnes: () => this.exporterAbonnes(),

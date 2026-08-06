@@ -147,9 +147,25 @@ de rappel prête à copier. Personne ne tombe sur la page d'erreur
 ### La lettre
 
 Un visiteur connecté peut cocher qu'il veut recevoir la lettre ; son adresse
-part dans `abonnes`. La régie affiche la liste et l'exporte en CSV
-(point-virgule, avec BOM pour qu'Excel respecte les accents). L'envoi lui-même
-n'est pas dans le site : prenez le CSV et votre outil habituel.
+part dans `abonnes`.
+
+L'onglet **La lettre** de la régie sert à l'écrire : un objet, un texte, et un
+bouton qui ajoute les *n* dernières bandes saisies sous forme de liste. Le
+brouillon reste dans le navigateur — il ne part nulle part tant que vous
+n'envoyez pas, et il survit à une fermeture d'onglet.
+
+L'envoi passe par **votre messagerie**, pas par le site : le bouton *Ouvrir
+dans ma messagerie* ouvre un message pré-rempli, tous les abonnés en copie
+cachée pour que personne ne voie les adresses des autres. Au-delà d'environ
+1800 caractères, plusieurs clients tronquent silencieusement le lien : la
+régie le détecte, refuse le raccourci et vous renvoie vers les deux boutons
+*Copier* (les adresses d'un côté, la lettre de l'autre) à coller dans Gmail
+ou Outlook.
+
+Il n'y a donc **aucun service d'envoi à payer ni à configurer**. Si un jour
+vous écrivez à cinquante personnes plutôt qu'à dix, il faudra un vrai
+expéditeur (Resend ou équivalent) — c'est une fonction Edge à ajouter, à
+demander le moment venu.
 
 ## Les photos
 
