@@ -154,18 +154,38 @@ bouton qui ajoute les *n* dernières bandes saisies sous forme de liste. Le
 brouillon reste dans le navigateur — il ne part nulle part tant que vous
 n'envoyez pas, et il survit à une fermeture d'onglet.
 
-L'envoi passe par **votre messagerie**, pas par le site : le bouton *Ouvrir
-dans ma messagerie* ouvre un message pré-rempli, tous les abonnés en copie
-cachée pour que personne ne voie les adresses des autres. Au-delà d'environ
-1800 caractères, plusieurs clients tronquent silencieusement le lien : la
-régie le détecte, refuse le raccourci et vous renvoie vers les deux boutons
-*Copier* (les adresses d'un côté, la lettre de l'autre) à coller dans Gmail
-ou Outlook.
+**L'envoi part du site.** Le bouton *Envoyer la lettre* appelle la fonction
+`envoyer-lettre`, qui tourne chez Supabase et non dans le navigateur. Elle
+vérifie que l'appelant est administrateur, lit la liste des abonnés avec ses
+propres clés — la liste ne descend jamais jusqu'à la page — et écrit **un
+message par personne** : personne ne voit l'adresse des autres, pas même en
+copie cachée. Le bouton *M'envoyer un essai* n'écrit qu'à vous, et l'envoi
+réel demande une seconde confirmation, parce qu'il ne se rattrape pas.
 
-Il n'y a donc **aucun service d'envoi à payer ni à configurer**. Si un jour
-vous écrivez à cinquante personnes plutôt qu'à dix, il faudra un vrai
-expéditeur (Resend ou équivalent) — c'est une fonction Edge à ajouter, à
-demander le moment venu.
+Le repli reste disponible sous *Ou passer par ma propre messagerie* : un
+`mailto:` pré-rempli, tout le monde en copie cachée. Au-delà d'environ 1800
+caractères plusieurs clients tronquent le lien sans prévenir, alors la régie
+refuse le raccourci et renvoie vers les deux boutons *Copier*.
+
+#### Ce qu'il faut fournir une fois
+
+Aucun site ne peut expédier du courrier par lui-même : il faut un expéditeur
+reconnu, sinon tout finit en indésirable. Prenez un compte chez l'un des
+deux, et posez les secrets dans **Supabase › Edge Functions › Secrets** :
+
+| Secret | À quoi ça sert |
+| --- | --- |
+| `BREVO_API_KEY` **ou** `RESEND_API_KEY` | la clé du service ; un seul des deux |
+| `LETTRE_EXPEDITEUR` | l'adresse d'envoi, vérifiée chez le prestataire |
+| `LETTRE_EXPEDITEUR_NOM` | facultatif, le nom affiché |
+
+**Brevo** convient si vous n'avez pas de nom de domaine : il suffit d'y
+vérifier une adresse existante (votre Gmail, par exemple), et l'offre gratuite
+va jusqu'à 300 courriers par jour. **Resend** est plus simple d'usage mais
+veut un domaine à vous : son adresse d'essai n'écrit qu'à vous-même.
+
+Tant que ces secrets manquent, le bouton d'envoi répond que le service n'est
+pas configuré, et le repli par votre messagerie continue de marcher.
 
 ## Les photos
 

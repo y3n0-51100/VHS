@@ -549,13 +549,25 @@
         <span style="flex: 1; min-width: 20px; height: 1px; background: rgba(255,215,154,0.14);"></span>
         <span class="r-aide">{{ compteAbonnes }}</span>
       </div>
-      <div class="r-aide">Le site n'envoie pas de courrier lui-même. Il prépare la lettre et vous la passez à votre messagerie — les adresses partent en <strong>copie cachée</strong>, personne ne voit celles des autres.</div>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button onClick="{{ onOuvrirMessagerie }}" class="r-bouton-primaire">✉ Ouvrir dans ma messagerie</button>
-        <button onClick="{{ onCopierAdresses }}" class="r-bouton">⧉ Copier les adresses</button>
-        <button onClick="{{ onCopierLettre }}" class="r-bouton">⧉ Copier la lettre</button>
+      <div class="r-aide">Le site expédie lui-même, un message par personne : personne ne voit l'adresse des autres, et la lettre part même si vous fermez la page. Faites un essai avant — il n'écrit qu'à vous.</div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <button onClick="{{ onEssaiLettre }}" class="r-bouton">✉ M'envoyer un essai</button>
+        <button onClick="{{ onEnvoyerLettre }}" class="r-bouton-primaire" style="font-size: 18px; padding: 12px 24px;">{{ texteEnvoyer }}</button>
+        <span class="r-aide">{{ etatEnvoi }}</span>
       </div>
-      <div class="r-aide">Si votre messagerie s'ouvre vide, ou si la lettre est longue : copiez les adresses dans le champ <em>Cci</em>, puis la lettre dans le corps du message.</div>
+
+      <details style="margin-top: 4px;">
+        <summary style="cursor: pointer; color: var(--papier-2); opacity: 0.7; font-size: 15px;">Ou passer par ma propre messagerie</summary>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 12px;">
+          <div class="r-aide">Sans service d'envoi configuré, ou simplement si vous préférez : la lettre s'ouvre dans votre logiciel de courrier, tout le monde en copie cachée.</div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button onClick="{{ onOuvrirMessagerie }}" class="r-bouton">✉ Ouvrir dans ma messagerie</button>
+            <button onClick="{{ onCopierAdresses }}" class="r-bouton">⧉ Copier les adresses</button>
+            <button onClick="{{ onCopierLettre }}" class="r-bouton">⧉ Copier la lettre</button>
+          </div>
+          <div class="r-aide">Si la lettre est longue, le raccourci est refusé : copiez les adresses dans le champ <em>Cci</em>, puis la lettre dans le corps du message.</div>
+        </div>
+      </details>
     </div>
 
     <sc-if value="{{ aDesAbonnes }}">
@@ -918,7 +930,7 @@ class Component extends DCLogic {
     sansPhotos: false,
     compte: null, admin: false, enPublication: false, abonnes: [], googleActif: false,
     miseEnPage: vueChoisie(), compact: false,
-    lettre: lireLettre()
+    lettre: lireLettre(), envoiEnCours: false, confirmEnvoi: false
   };
 
   componentDidMount() {
@@ -933,7 +945,7 @@ class Component extends DCLogic {
     };
     window.addEventListener("resize", this._taille);
     window.addEventListener("orientationchange", this._taille);
-    this._echap = (e) => { if (e.key === "Escape") this.setState({ confirmBande: -1, confirmPersonne: -1, confirmVider: false }); };
+    this._echap = (e) => { if (e.key === "Escape") this.setState({ confirmBande: -1, confirmPersonne: -1, confirmVider: false, confirmEnvoi: false }); };
     window.addEventListener("keydown", this._echap);
   }
   componentWillUnmount() {
@@ -1052,6 +1064,34 @@ class Component extends DCLogic {
     const corps = this.state.lettre.corps;
     this.patchLettre({ corps: corps ? corps.replace(/\s*$/, "") + "\n\n" + bloc + "\n" : bloc + "\n" });
     this.crier(dernieres.length + " bande" + (dernieres.length > 1 ? "s ajoutées" : " ajoutée") + " au texte");
+  }
+
+  // Demande à Supabase d'expédier. Un envoi ne se rejoue pas : on verrouille
+  // le bouton pendant l'opération, et on confirme le vrai départ.
+  async envoyerLettre(essai) {
+    if (this.state.envoiEnCours) return;
+    const l = this.state.lettre;
+    if (!l.objet.trim()) { this.crier("Il manque l'objet"); return; }
+    if (!l.corps.trim()) { this.crier("Il manque le texte"); return; }
+    if (!essai && !(this.state.abonnes || []).length) { this.crier("Aucun abonné à qui écrire"); return; }
+    if (!essai && !this.state.confirmEnvoi) {
+      this.setState({ confirmEnvoi: true });
+      return;
+    }
+    this.setState({ envoiEnCours: true, confirmEnvoi: false });
+    try {
+      const r = await Nuage.envoyerLettre(l.objet, l.corps, essai);
+      if (essai) this.crier("Essai parti vers " + (r.destinataire || "votre adresse"));
+      else if (r.echecs && r.echecs.length) {
+        this.crier(r.envoyes + " envoyée(s), " + r.echecs.length + " en échec — voir la console");
+        console.warn("[lettre] échecs :", r.echecs);
+      } else {
+        this.crier("Lettre partie à " + r.envoyes + " personne" + (r.envoyes > 1 ? "s" : ""));
+      }
+    } catch (e) {
+      this.crier(String(e.message || e));
+    }
+    this.setState({ envoiEnCours: false });
   }
 
   adressesAbonnes() {
@@ -1507,7 +1547,7 @@ class Component extends DCLogic {
     ].map((o) => {
       const actif = s.onglet === o.c;
       return {
-        nom: o.nom, onClick: () => this.setState({ onglet: o.c, confirmVider: false }),
+        nom: o.nom, onClick: () => this.setState({ onglet: o.c, confirmVider: false, confirmEnvoi: false }),
         bg: actif ? "linear-gradient(#ffd79a, #e8a33d)" : "#140d09",
         fg: actif ? "#241610" : "#e2cfa6",
         bd: actif ? "rgba(255,215,154,0.75)" : "rgba(255,215,154,0.2)",
@@ -1653,6 +1693,16 @@ class Component extends DCLogic {
         ? (s.abonnes.length === 1 ? "1 destinataire" : s.abonnes.length + " destinataires")
         : "aucun destinataire",
       sansAbonne: (s.abonnes || []).length === 0,
+      onEssaiLettre: () => this.envoyerLettre(true),
+      onEnvoyerLettre: () => this.envoyerLettre(false),
+      texteEnvoyer: s.envoiEnCours
+        ? "Envoi…"
+        : (s.confirmEnvoi
+            ? "Confirmer l'envoi à " + (s.abonnes || []).length + " personne" + ((s.abonnes || []).length > 1 ? "s" : "") + " ?"
+            : "▲ Envoyer la lettre"),
+      etatEnvoi: s.confirmEnvoi
+        ? "un envoi ne se rattrape pas"
+        : ((s.abonnes || []).length ? "" : "personne à qui écrire pour l'instant"),
       onOuvrirMessagerie: () => this.ouvrirMessagerie(),
       onCopierAdresses: () => {
         const a = this.adressesAbonnes();

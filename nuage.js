@@ -266,6 +266,30 @@
     return true;
   }
 
+  // Demande à Supabase d'expédier la lettre. Rien ne part d'ici : le texte
+  // monte, la fonction « envoyer-lettre » vérifie le droit, lit les abonnés
+  // avec ses propres clés et écrit à chacun séparément.
+  async function envoyerLettre(objet, texte, essai) {
+    const s = await session();
+    if (!s) throw new Error("connexion requise");
+    const r = await fetch(URL_BASE + "/functions/v1/envoyer-lettre", {
+      method: "POST",
+      headers: entetes(s),
+      body: JSON.stringify({ objet: objet, texte: texte, essai: !!essai })
+    });
+    let charge = null;
+    try { charge = await r.json(); } catch (e) {}
+    if (!r.ok) {
+      const dit = charge && charge.erreur ? charge.erreur : "envoi refusé (" + r.status + ")";
+      // 404 : la fonction n'a jamais été déployée. Le dire franchement plutôt
+      // que de laisser croire à une panne passagère.
+      throw new Error(r.status === 404
+        ? "le service d'envoi n'est pas encore installé sur ce projet"
+        : dit);
+    }
+    return charge || {};
+  }
+
   // Réservé à l'administrateur : les règles de la base filtrent d'elles-mêmes.
   async function listerAbonnes() {
     const s = await session();
@@ -291,6 +315,7 @@
     monAbonnement: monAbonnement,
     abonner: abonner,
     desabonner: desabonner,
-    listerAbonnes: listerAbonnes
+    listerAbonnes: listerAbonnes,
+    envoyerLettre: envoyerLettre
   };
 })(window);
