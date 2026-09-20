@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Course Urbaine — un jeu 3D au clavier</title>
+<style>
+  :root{
+    --couleur-fond: #16233a;
+    --couleur-texte: #f4f7ff;
+    --couleur-accent: #ffc83d;
+    --couleur-accent-2: #38d6ff;
+  }
+  *{ box-sizing: border-box; margin: 0; padding: 0; }
+  html, body{ height: 100%; overflow: hidden; background: var(--couleur-fond); }
+  body{
+    font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    color: var(--couleur-texte);
+    -webkit-user-select: none; user-select: none;
+  }
+  canvas{ display: block; }
+
+  .hud{ position: fixed; inset: 0; pointer-events: none; }
+  .hud_haut{
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 18px 22px; gap: 12px;
+    text-shadow: 0 2px 10px rgba(0,0,0,.6);
+  }
+  .bloc-score{ font-size: 40px; font-weight: 700; line-height: 1; letter-spacing: -1px; }
+  .bloc-score small{ display: block; font-size: 13px; font-weight: 400; opacity: .7; letter-spacing: 1px; text-transform: uppercase; }
+  .bloc-pieces{ font-size: 28px; font-weight: 700; color: var(--couleur-accent); text-align: right; }
+  .bloc-pieces small{ display: block; font-size: 13px; font-weight: 400; color: var(--couleur-texte); opacity: .7; letter-spacing: 1px; text-transform: uppercase; }
+
+  .voile{
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 18px; text-align: center; padding: 24px;
+    background: radial-gradient(circle at 50% 40%, rgba(20,30,60,.72), rgba(4,7,16,.94));
+    backdrop-filter: blur(3px);
+  }
+  .voile[hidden]{ display: none; }
+  .voile h1{ font-size: clamp(34px, 7vw, 68px); letter-spacing: -2px; line-height: .95; }
+  .voile h1 span{ color: var(--couleur-accent); }
+  .voile h2{ font-size: clamp(28px, 6vw, 52px); color: #ff6b6b; letter-spacing: -1px; }
+  .voile p{ max-width: 34ch; opacity: .82; line-height: 1.5; }
+  .touches{ display: grid; grid-template-columns: auto auto; gap: 8px 16px; margin-top: 6px; font-size: 15px; }
+  .touches b{ color: var(--couleur-accent-2); font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .touches span{ text-align: left; opacity: .85; }
+  .bouton{
+    pointer-events: auto; cursor: pointer;
+    margin-top: 10px; padding: 14px 30px;
+    font: inherit; font-size: 18px; font-weight: 700; letter-spacing: .5px;
+    color: #10131c; background: var(--couleur-accent);
+    border: none; border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(255,200,61,.3);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .bouton:hover{ transform: translateY(-2px); box-shadow: 0 14px 34px rgba(255,200,61,.42); }
+  .bouton:active{ transform: translateY(1px); }
+  .resultat{ display: flex; gap: 34px; margin: 4px 0 6px; }
+  .resultat div{ font-size: 32px; font-weight: 700; line-height: 1.1; }
+  .resultat small{ display: block; font-size: 12px; font-weight: 400; opacity: .7; text-transform: uppercase; letter-spacing: 1px; }
+  .record{ color: var(--couleur-accent); font-weight: 700; }
+  .pied{ position: absolute; bottom: 16px; font-size: 12px; opacity: .45; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+
+<div class="hud">
+  <div class="hud_haut">
+    <div class="bloc-score"><small>Score</small><span id="score">0</span></div>
+    <div class="bloc-pieces"><small>Pièces</small><span id="pieces">0</span></div>
+  </div>
+</div>
+
+<div class="voile" id="ecran-accueil">
+  <h1>Course <span>Urbaine</span></h1>
+  <p>Cours le plus loin possible, esquive les trains, saute les barrières, glisse sous les portiques et ramasse les pièces.</p>
+  <div class="touches">
+    <b>← →</b><span>ou Q / D — changer de voie</span>
+    <b>↑ / Espace</b><span>ou Z — sauter</span>
+    <b>↓</b><span>ou S — glisser</span>
+    <b>P</b><span>pause &nbsp;·&nbsp; <b>R</b> recommencer</span>
+  </div>
+  <button class="bouton" id="bouton-jouer">Jouer</button>
+  <div class="pied">Meilleur score : <span class="record" id="record-accueil">0</span></div>
+</div>
+
+<div class="voile" id="ecran-fin" hidden>
+  <h2>Percuté !</h2>
+  <div class="resultat">
+    <div><small>Score</small><span id="fin-score">0</span></div>
+    <div><small>Pièces</small><span id="fin-pieces">0</span></div>
+    <div><small>Record</small><span class="record" id="fin-record">0</span></div>
+  </div>
+  <p id="fin-message"></p>
+  <button class="bouton" id="bouton-rejouer">Rejouer</button>
+  <div class="pied">Touche <b>R</b> pour relancer directement</div>
+</div>
+
+<div class="voile" id="ecran-pause" hidden>
+  <h1>Pause</h1>
+  <p>Touche <b>P</b> pour reprendre la course.</p>
+  <button class="bouton" id="bouton-reprendre">Reprendre</button>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* ------------------------------------------------------------------ *
+ *  Réglages
+ * ------------------------------------------------------------------ */
+const VOIES = [-2.2, 0, 2.2];       // position X des trois voies
+const VITESSE_DEPART = 16;          // unités/seconde
+const VITESSE_MAX = 46;
+const ACCELERATION = 0.42;          // gain de vitesse par seconde
+const GRAVITE = -58;
+const IMPULSION_SAUT = 17;
+const DUREE_GLISSADE = 0.62;
+const Z_APPARITION = -160;          // les obstacles naissent loin devant
+const Z_DISPARITION = 14;           // et meurent derrière la caméra
+
+const DEMI_LARGEUR_JOUEUR = 0.42;
+const DEMI_PROFONDEUR_JOUEUR = 0.45;
+const HAUTEUR_DEBOUT = 1.75;
+const HAUTEUR_GLISSE = 0.85;
+
+/* ------------------------------------------------------------------ *
+ *  Scène, caméra, lumières
+ * ------------------------------------------------------------------ */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x8ec9f0);
+scene.fog = new THREE.Fog(0x9fd3f2, 60, 165);
+
+const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 400);
+camera.position.set(0, 3.9, 8.6);
+camera.lookAt(0, 1.85, -14);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xdcefff, 0x6b7390, 1.5));
+
+const soleil = new THREE.DirectionalLight(0xfff4dd, 1.65);
+soleil.position.set(-14, 26, 10);
+soleil.castShadow = true;
+soleil.shadow.mapSize.set(1024, 1024);
+soleil.shadow.camera.near = 1;
+soleil.shadow.camera.far = 70;
+soleil.shadow.camera.left = -18;
+soleil.shadow.camera.right = 18;
+soleil.shadow.camera.top = 24;
+soleil.shadow.camera.bottom = -24;
+scene.add(soleil);
+scene.add(soleil.target);
+
+/* ------------------------------------------------------------------ *
+ *  Le décor : sol, rails, traverses, immeubles
+ * ------------------------------------------------------------------ */
+const materiaux = {
+  sol:       new THREE.MeshLambertMaterial({ color: 0x8c9aa8 }),
+  ballast:   new THREE.MeshLambertMaterial({ color: 0x6f7889 }),
+  traverse:  new THREE.MeshLambertMaterial({ color: 0x8a6a45 }),
+  rail:      new THREE.MeshLambertMaterial({ color: 0x9aa6bd }),
+  barriere:  new THREE.MeshLambertMaterial({ color: 0xff5f4d }),
+  portique:  new THREE.MeshLambertMaterial({ color: 0x8e6bff }),
+  wagon:     new THREE.MeshLambertMaterial({ color: 0xf2f4f8 }),
+  wagonToit: new THREE.MeshLambertMaterial({ color: 0xd23b4e }),
+  vitre:     new THREE.MeshLambertMaterial({ color: 0x1d2a44 }),
+  piece:     new THREE.MeshLambertMaterial({ color: 0xffc83d, emissive: 0x6b4d00 }),
+  peau:      new THREE.MeshLambertMaterial({ color: 0xf3c69a }),
+  veste:     new THREE.MeshLambertMaterial({ color: 0x28c5a8 }),
+  pantalon:  new THREE.MeshLambertMaterial({ color: 0x2a3c74 }),
+  casquette: new THREE.MeshLambertMaterial({ color: 0xffc83d }),
+  chaussure: new THREE.MeshLambertMaterial({ color: 0xf4f7ff }),
+};
+
+const sol = new THREE.Mesh(new THREE.PlaneGeometry(60, 420), materiaux.sol);
+sol.rotation.x = -Math.PI / 2;
+sol.position.z = -180;
+sol.receiveShadow = true;
+scene.add(sol);
+
+const ballast = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.16, 420), materiaux.ballast);
+ballast.position.set(0, 0.02, -180);
+ballast.receiveShadow = true;
+scene.add(ballast);
+
+// Traverses et immeubles : des objets recyclés qui repartent devant
+// dès qu'ils passent derrière la caméra — l'illusion d'un monde infini.
+const geoTraverse = new THREE.BoxGeometry(8, 0.14, 0.5);
+const traverses = [];
+for (let i = 0; i < 90; i++) {
+  const t = new THREE.Mesh(geoTraverse, materiaux.traverse);
+  t.position.set(0, 0.12, -i * 2.2 + 10);
+  t.receiveShadow = true;
+  scene.add(t);
+  traverses.push(t);
+}
+
+for (const x of [-3.35, 3.35]) {
+  const rail = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 420), materiaux.rail);
+  rail.position.set(x, 0.2, -180);
+  scene.add(rail);
+}
+
+const geoImmeuble = new THREE.BoxGeometry(1, 1, 1);
+const immeubles = [];
+for (let i = 0; i < 44; i++) {
+  const cote = i % 2 === 0 ? -1 : 1;
+  const m = new THREE.Mesh(geoImmeuble, new THREE.MeshLambertMaterial({
+    color: new THREE.Color().setHSL(0.52 + Math.random() * 0.22, 0.32, 0.46 + Math.random() * 0.22)
+  }));
+  m.castShadow = true;
+  placerImmeuble(m, cote, -i * 9 + 10);
+  scene.add(m);
+  immeubles.push(m);
+}
+function placerImmeuble(m, cote, z) {
+  const largeur = 4 + Math.random() * 4;
+  const hauteur = 6 + Math.random() * 22;
+  m.scale.set(largeur, hauteur, 5 + Math.random() * 5);
+  m.position.set(cote * (8 + Math.random() * 5), hauteur / 2, z);
+  m.userData.cote = cote;
+}
+
+/* ------------------------------------------------------------------ *
+ *  Le coureur
+ * ------------------------------------------------------------------ */
+const joueur = new THREE.Group();
+scene.add(joueur);
+
+const corps = new THREE.Group();          // tout ce qui s'incline quand on glisse
+joueur.add(corps);
+
+function boite(l, h, p, materiau, x, y, z) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(l, h, p), materiau);
+  m.position.set(x, y, z);
+  m.castShadow = true;
+  return m;
+}
+
+corps.add(boite(0.74, 0.78, 0.44, materiaux.veste, 0, 1.12, 0));        // torse
+corps.add(boite(0.44, 0.42, 0.42, materiaux.peau, 0, 1.68, 0));          // tête
+const casquette = boite(0.5, 0.14, 0.48, materiaux.casquette, 0, 1.92, 0);
+corps.add(casquette);
+corps.add(boite(0.44, 0.1, 0.2, materiaux.casquette, 0, 1.87, -0.3));    // visière
+
+const brasG = new THREE.Group(); brasG.position.set(-0.46, 1.42, 0);
+const brasD = new THREE.Group(); brasD.position.set(0.46, 1.42, 0);
+brasG.add(boite(0.2, 0.62, 0.2, materiaux.veste, 0, -0.31, 0));
+brasD.add(boite(0.2, 0.62, 0.2, materiaux.veste, 0, -0.31, 0));
+corps.add(brasG, brasD);
+
+const jambeG = new THREE.Group(); jambeG.position.set(-0.19, 0.72, 0);
+const jambeD = new THREE.Group(); jambeD.position.set(0.19, 0.72, 0);
+for (const j of [jambeG, jambeD]) {
+  j.add(boite(0.24, 0.64, 0.24, materiaux.pantalon, 0, -0.32, 0));
+  j.add(boite(0.26, 0.14, 0.4, materiaux.chaussure, 0, -0.66, -0.06));
+}
+corps.add(jambeG, jambeD);
+
+// Une ombre portée simplifiée, bien plus lisible qu'une vraie ombre au sol.
+const ombre = new THREE.Mesh(
+  new THREE.CircleGeometry(0.55, 24),
+  new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.32 })
+);
+ombre.rotation.x = -Math.PI / 2;
+scene.add(ombre);
+
+/* ------------------------------------------------------------------ *
+ *  Fabrication des obstacles et des pièces
+ * ------------------------------------------------------------------ */
+const geoPiece = new THREE.CylinderGeometry(0.34, 0.34, 0.1, 16);
+geoPiece.rotateX(Math.PI / 2);
+
+function creerBarriere() {                 // basse : il faut sauter
+  const g = new THREE.Group();
+  g.add(boite(1.7, 0.2, 0.28, materiaux.barriere, 0, 0.78, 0));
+  g.add(boite(1.7, 0.16, 0.24, materiaux.barriere, 0, 0.45, 0));
+  g.add(boite(0.16, 0.9, 0.24, materiaux.barriere, -0.78, 0.45, 0));
+  g.add(boite(0.16, 0.9, 0.24, materiaux.barriere, 0.78, 0.45, 0));
+  return { objet: g, bas: 0, haut: 0.92, profondeur: 0.6 };
+}
+
+function creerPortique() {                 // haut : il faut glisser dessous
+  const g = new THREE.Group();
+  g.add(boite(2.1, 0.9, 0.4, materiaux.portique, 0, 1.85, 0));
+  g.add(boite(2.1, 0.18, 0.5, materiaux.portique, 0, 2.4, 0));
+  return { objet: g, bas: 1.32, haut: 2.5, profondeur: 0.7 };
+}
+
+function creerWagon() {                    // bloque toute la voie : il faut l'éviter
+  const g = new THREE.Group();
+  g.add(boite(1.9, 2.2, 9, materiaux.wagon, 0, 1.2, 0));
+  g.add(boite(2.0, 0.3, 9, materiaux.wagonToit, 0, 2.4, 0));
+  g.add(boite(1.94, 0.6, 3.4, materiaux.vitre, 0, 1.75, -1.9));
+  g.add(boite(1.94, 0.6, 3.4, materiaux.vitre, 0, 1.75, 2.4));
+  return { objet: g, bas: 0, haut: 2.6, profondeur: 9.6 };
+}
+
+const fabriques = { barriere: creerBarriere, portique: creerPortique, wagon: creerWagon };
+
+const obstacles = [];
+const pieces = [];
+
+function ajouterObstacle(type, voie, z) {
+  const { objet, bas, haut, profondeur } = fabriques[type]();
+  objet.position.set(VOIES[voie], 0, z);
+  scene.add(objet);
+  obstacles.push({ objet, voie, bas, haut, profondeur });
+}
+
+function ajouterPiece(voie, z, y) {
+  const m = new THREE.Mesh(geoPiece, materiaux.piece);
+  m.position.set(VOIES[voie], y, z);
+  scene.add(m);
+  pieces.push({ objet: m, voie, prise: false });
+}
+
+function viderObjets() {
+  for (const o of obstacles) scene.remove(o.objet);
+  for (const p of pieces) scene.remove(p.objet);
+  obstacles.length = 0;
+  pieces.length = 0;
+}
+
+/* ------------------------------------------------------------------ *
+ *  Génération du parcours
+ * ------------------------------------------------------------------ */
+let zProchainMotif = Z_APPARITION;
+
+function genererMotif(z) {
+  // On bloque une ou deux voies au plus : il reste toujours un passage.
+  const libres = [0, 1, 2];
+  const nbBloquees = Math.random() < (etat.vitesse > 28 ? 0.45 : 0.25) ? 2 : 1;
+
+  for (let i = 0; i < nbBloquees; i++) {
+    const index = Math.floor(Math.random() * libres.length);
+    const voie = libres.splice(index, 1)[0];
+    const tirage = Math.random();
+    const type = tirage < 0.4 ? 'barriere' : tirage < 0.72 ? 'portique' : 'wagon';
+    ajouterObstacle(type, voie, type === 'wagon' ? z - 4 : z);
+  }
+
+  // Un chapelet de pièces sur une voie restée libre.
+  if (libres.length && Math.random() < 0.85) {
+    const voie = libres[Math.floor(Math.random() * libres.length)];
+    const enCloche = Math.random() < 0.35;
+    const nb = 4 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < nb; i++) {
+      const t = nb === 1 ? 0 : i / (nb - 1);
+      const y = enCloche ? 0.9 + Math.sin(t * Math.PI) * 2.1 : 1.0;
+      ajouterPiece(voie, z - 6 - i * 1.9, y);
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ *  État de la partie
+ * ------------------------------------------------------------------ */
+const etat = {
+  phase: 'accueil',        // accueil | course | pause | fin
+  vitesse: VITESSE_DEPART,
+  distance: 0,
+  pieces: 0,
+  voie: 1,
+  x: 0,
+  y: 0,
+  vitesseY: 0,
+  auSol: true,
+  glisse: 0,               // temps de glissade restant
+  cycleCourse: 0,
+  secousse: 0,
+};
+
+const elScore = document.getElementById('score');
+const elPieces = document.getElementById('pieces');
+const ecranAccueil = document.getElementById('ecran-accueil');
+const ecranFin = document.getElementById('ecran-fin');
+const ecranPause = document.getElementById('ecran-pause');
+
+let record = Number(localStorage.getItem('course-urbaine-record') || 0);
+document.getElementById('record-accueil').textContent = record;
+
+function reinitialiser() {
+  viderObjets();
+  etat.vitesse = VITESSE_DEPART;
+  etat.distance = 0;
+  etat.pieces = 0;
+  etat.voie = 1;
+  etat.x = 0;
+  etat.y = 0;
+  etat.vitesseY = 0;
+  etat.auSol = true;
+  etat.glisse = 0;
+  etat.secousse = 0;
+  zProchainMotif = -60;
+  elScore.textContent = '0';
+  elPieces.textContent = '0';
+}
+
+function demarrer() {
+  reinitialiser();
+  ecranAccueil.hidden = true;
+  ecranFin.hidden = true;
+  ecranPause.hidden = true;
+  etat.phase = 'course';
+}
+
+function terminer() {
+  etat.phase = 'fin';
+  etat.secousse = 0.5;
+  const score = Math.floor(etat.distance) + etat.pieces * 10;
+  const nouveauRecord = score > record;
+  if (nouveauRecord) {
+    record = score;
+    localStorage.setItem('course-urbaine-record', String(record));
+  }
+  document.getElementById('fin-score').textContent = score;
+  document.getElementById('fin-pieces').textContent = etat.pieces;
+  document.getElementById('fin-record').textContent = record;
+  document.getElementById('fin-message').textContent = nouveauRecord
+    ? 'Nouveau record ! Tu ne feras pas mieux sans y retourner tout de suite.'
+    : `Il te manque ${record - score} point${record - score > 1 ? 's' : ''} pour battre ton record.`;
+  document.getElementById('record-accueil').textContent = record;
+  ecranFin.hidden = false;
+  son(90, 0.28, 'sawtooth', 0.18);
+}
+
+function basculerPause() {
+  if (etat.phase === 'course') {
+    etat.phase = 'pause';
+    ecranPause.hidden = false;
+  } else if (etat.phase === 'pause') {
+    etat.phase = 'course';
+    ecranPause.hidden = true;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ *  Sons : quelques bips synthétisés, sans fichier à charger
+ * ------------------------------------------------------------------ */
+let audio = null;
+function son(frequence, duree, forme = 'square', volume = 0.08) {
+  try {
+    if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') audio.resume();
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    osc.type = forme;
+    osc.frequency.setValueAtTime(frequence, audio.currentTime);
+    gain.gain.setValueAtTime(volume, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + duree);
+    osc.connect(gain).connect(audio.destination);
+    osc.start();
+    osc.stop(audio.currentTime + duree);
+  } catch (e) { /* pas de son : tant pis, le jeu continue */ }
+}
+
+/* ------------------------------------------------------------------ *
+ *  Clavier
+ * ------------------------------------------------------------------ */
+function changerVoie(delta) {
+  const cible = Math.min(2, Math.max(0, etat.voie + delta));
+  if (cible !== etat.voie) {
+    etat.voie = cible;
+    son(420, 0.06, 'triangle', 0.05);
+  }
+}
+
+function sauter() {
+  if (etat.auSol) {
+    etat.vitesseY = IMPULSION_SAUT;
+    etat.auSol = false;
+    etat.glisse = 0;
+    son(620, 0.12, 'triangle', 0.07);
+  }
+}
+
+function glisser() {
+  if (etat.glisse <= 0) {
+    etat.glisse = DUREE_GLISSADE;
+    if (!etat.auSol) etat.vitesseY = -26;   // glissade en l'air = retombée sèche
+    son(200, 0.16, 'sawtooth', 0.06);
+  }
+}
+
+addEventListener('keydown', (e) => {
+  const t = e.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(t)) e.preventDefault();
+
+  if (t === 'p') { basculerPause(); return; }
+  if (t === 'r') { demarrer(); return; }
+
+  if (etat.phase === 'accueil' || etat.phase === 'fin') {
+    if (t === ' ' || t === 'enter') demarrer();
+    return;
+  }
+  if (etat.phase !== 'course') return;
+
+  if (t === 'arrowleft' || t === 'q' || t === 'a') changerVoie(-1);
+  else if (t === 'arrowright' || t === 'd') changerVoie(1);
+  else if (t === 'arrowup' || t === ' ' || t === 'z' || t === 'w') sauter();
+  else if (t === 'arrowdown' || t === 's') glisser();
+});
+
+document.getElementById('bouton-jouer').addEventListener('click', demarrer);
+document.getElementById('bouton-rejouer').addEventListener('click', demarrer);
+document.getElementById('bouton-reprendre').addEventListener('click', basculerPause);
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+/* ------------------------------------------------------------------ *
+ *  Boucle de jeu
+ * ------------------------------------------------------------------ */
+const horloge = new THREE.Clock();
+
+function animer() {
+  requestAnimationFrame(animer);
+  const dt = Math.min(horloge.getDelta(), 0.05);   // on borne le pas : onglet en arrière-plan
+
+  if (etat.phase === 'course') majPartie(dt);
+  else if (etat.phase === 'accueil') defilerDecor(dt, 6);
+
+  majJoueur(dt);
+  majCamera(dt);
+  renderer.render(scene, camera);
+}
+
+function defilerDecor(dt, vitesse) {
+  const avance = vitesse * dt;
+  for (const t of traverses) {
+    t.position.z += avance;
+    if (t.position.z > Z_DISPARITION) t.position.z -= 90 * 2.2;
+  }
+  for (const m of immeubles) {
+    m.position.z += avance;
+    if (m.position.z > 30) placerImmeuble(m, m.userData.cote, m.position.z - 44 * 9);
+  }
+}
+
+function majPartie(dt) {
+  etat.vitesse = Math.min(VITESSE_MAX, etat.vitesse + ACCELERATION * dt);
+  etat.distance += etat.vitesse * dt * 0.6;
+  elScore.textContent = Math.floor(etat.distance);
+
+  const avance = etat.vitesse * dt;
+  defilerDecor(dt, etat.vitesse);
+
+  // Naissance des motifs : l'écart se resserre à mesure qu'on accélère.
+  zProchainMotif += avance;
+  while (zProchainMotif > Z_APPARITION) {
+    const ecart = Math.max(19, 34 - etat.vitesse * 0.35) + Math.random() * 10;
+    genererMotif(zProchainMotif - ecart);
+    zProchainMotif -= ecart;
+  }
+
+  // Obstacles
+  for (let i = obstacles.length - 1; i >= 0; i--) {
+    const o = obstacles[i];
+    o.objet.position.z += avance;
+    if (o.objet.position.z > Z_DISPARITION) {
+      scene.remove(o.objet);
+      obstacles.splice(i, 1);
+      continue;
+    }
+    if (toucheObstacle(o)) { terminer(); return; }
+  }
+
+  // Pièces
+  for (let i = pieces.length - 1; i >= 0; i--) {
+    const p = pieces[i];
+    p.objet.position.z += avance;
+    p.objet.rotation.z += dt * 5;
+    if (p.objet.position.z > Z_DISPARITION) {
+      scene.remove(p.objet);
+      pieces.splice(i, 1);
+      continue;
+    }
+    if (!p.prise && p.voie === etat.voie
+        && Math.abs(p.objet.position.z) < 0.9
+        && Math.abs(p.objet.position.y - (etat.y + hauteurJoueur() / 2)) < 1.25) {
+      p.prise = true;
+      scene.remove(p.objet);
+      pieces.splice(i, 1);
+      etat.pieces++;
+      elPieces.textContent = etat.pieces;
+      son(880 + Math.min(etat.pieces, 12) * 18, 0.08, 'square', 0.06);
+    }
+  }
+}
+
+function hauteurJoueur() {
+  return etat.glisse > 0 ? HAUTEUR_GLISSE : HAUTEUR_DEBOUT;
+}
+
+function toucheObstacle(o) {
+  if (o.voie !== etat.voie) return false;
+  const z = o.objet.position.z;
+  if (Math.abs(z) > o.profondeur / 2 + DEMI_PROFONDEUR_JOUEUR) return false;
+  const bas = etat.y;
+  const haut = etat.y + hauteurJoueur();
+  return haut > o.bas + 0.06 && bas < o.haut - 0.06;
+}
+
+function majJoueur(dt) {
+  // Glissement latéral vers la voie visée
+  const cibleX = VOIES[etat.voie];
+  etat.x += (cibleX - etat.x) * Math.min(1, dt * 14);
+
+  // Saut
+  if (!etat.auSol || etat.vitesseY > 0) {
+    etat.vitesseY += GRAVITE * dt;
+    etat.y += etat.vitesseY * dt;
+    if (etat.y <= 0) {
+      etat.y = 0;
+      etat.vitesseY = 0;
+      etat.auSol = true;
+    }
+  }
+
+  // Glissade
+  if (etat.glisse > 0) {
+    etat.glisse -= dt;
+    if (etat.glisse < 0) etat.glisse = 0;
+  }
+
+  joueur.position.set(etat.x, etat.y, 0);
+  joueur.rotation.z = (cibleX - etat.x) * 0.12;      // léger roulis dans le virage
+
+  const glisseEnCours = etat.glisse > 0;
+  corps.rotation.x = amortir(corps.rotation.x, glisseEnCours ? -1.15 : 0, dt * 16);
+  corps.position.y = amortir(corps.position.y, glisseEnCours ? -0.28 : 0, dt * 16);
+  corps.position.z = amortir(corps.position.z, glisseEnCours ? 0.35 : 0, dt * 16);
+
+  // Animation de course : jambes et bras en opposition
+  if (etat.phase === 'course' || etat.phase === 'accueil') {
+    etat.cycleCourse += dt * (etat.phase === 'course' ? etat.vitesse * 0.85 : 7);
+  }
+  const balancement = Math.sin(etat.cycleCourse);
+  if (etat.auSol && !glisseEnCours) {
+    jambeG.rotation.x = balancement * 0.9;
+    jambeD.rotation.x = -balancement * 0.9;
+    brasG.rotation.x = -balancement * 0.7;
+    brasD.rotation.x = balancement * 0.7;
+    corps.position.y += Math.abs(Math.sin(etat.cycleCourse)) * 0.05;
+  } else if (glisseEnCours) {
+    jambeG.rotation.x = jambeD.rotation.x = -0.5;
+    brasG.rotation.x = brasD.rotation.x = -2.2;
+  } else {
+    jambeG.rotation.x = -0.6; jambeD.rotation.x = 0.35;
+    brasG.rotation.x = brasD.rotation.x = -2.4;
+  }
+
+  ombre.position.set(etat.x, 0.06, 0);
+  const proximiteSol = Math.max(0.25, 1 - etat.y / 4);
+  ombre.scale.setScalar(proximiteSol);
+  ombre.material.opacity = 0.32 * proximiteSol;
+
+  soleil.position.set(etat.x - 14, 26, 10);
+  soleil.target.position.set(etat.x, 0, -10);
+}
+
+function amortir(valeur, cible, facteur) {
+  return valeur + (cible - valeur) * Math.min(1, facteur);
+}
+
+function majCamera(dt) {
+  if (etat.secousse > 0) etat.secousse = Math.max(0, etat.secousse - dt * 1.6);
+  const s = etat.secousse;
+  camera.position.x = amortir(camera.position.x, etat.x * 0.55, dt * 6) + (Math.random() - 0.5) * s;
+  camera.position.y = amortir(camera.position.y, 3.9 + etat.y * 0.35, dt * 5) + (Math.random() - 0.5) * s;
+  camera.lookAt(etat.x * 0.35, 1.85 + etat.y * 0.4, -14);
+}
+
+animer();
+</script>
+</body>
+</html>
