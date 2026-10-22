@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flow Automation</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="page-wrapper">
+    <main class="main-wrapper">
+
+      <!-- En-tête : état de la connexion à Flow -->
+      <header class="section_header">
+        <div class="padding-global">
+          <div class="header_component">
+            <div class="header_title">
+              <h1 class="heading-style-h5">Flow Automation</h1>
+              <p class="text-size-tiny text-color-secondary">Prompts d'images → Google Flow</p>
+            </div>
+            <div id="connection" class="status-pill is-off">Flow non détecté</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Ajout de prompts -->
+      <section class="section_add">
+        <div class="padding-global padding-section-small">
+          <label class="form_label" for="prompts">Ajouter des prompts</label>
+          <textarea id="prompts" class="form_input is-textarea" rows="6"
+            placeholder="Un prompt par ligne…"></textarea>
+          <div class="add_row">
+            <select id="separator" class="form_input is-select" aria-label="Séparateur">
+              <option value="ligne">1 ligne = 1 prompt</option>
+              <option value="vide">Séparés par une ligne vide</option>
+              <option value="tirets">Séparés par ---</option>
+            </select>
+            <button id="btn-add" class="button is-small">Ajouter</button>
+          </div>
+          <div class="add_row">
+            <label class="button is-secondary is-small is-file">
+              Importer .txt / .json
+              <input id="file" type="file" accept=".txt,.json,.md,text/plain,application/json" hidden>
+            </label>
+            <span id="add-feedback" class="text-size-tiny text-color-secondary"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contrôles + progression -->
+      <section class="section_run">
+        <div class="padding-global">
+          <div class="run_component">
+            <div class="run_buttons">
+              <button id="btn-start" class="button">▶ Démarrer</button>
+              <button id="btn-stop" class="button is-danger" disabled>■ Arrêter</button>
+              <button id="btn-detect" class="button is-secondary is-small" title="Encadre le champ et le bouton détectés dans Flow">Tester</button>
+            </div>
+            <div class="progress_wrapper">
+              <div class="progress_bar"><div id="progress-fill" class="progress_fill"></div></div>
+              <span id="progress-text" class="text-size-tiny">0 / 0</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- File d'attente -->
+      <section class="section_queue">
+        <div class="padding-global padding-section-small">
+          <div class="queue_header">
+            <h2 class="heading-style-h6">File d'attente</h2>
+            <div class="queue_actions">
+              <button id="btn-reset" class="button is-text">Relancer tout</button>
+              <button id="btn-clear-done" class="button is-text">Retirer terminés</button>
+              <button id="btn-clear" class="button is-text is-danger">Vider</button>
+            </div>
+          </div>
+          <ol id="queue" class="queue_list"></ol>
+          <p id="queue-empty" class="queue_empty text-size-small text-color-secondary">Aucun prompt pour l'instant.</p>
+        </div>
+      </section>
+
+      <!-- Réglages -->
+      <section class="section_settings">
+        <div class="padding-global">
+          <details class="settings_component">
+            <summary class="settings_summary">Réglages</summary>
+            <div class="settings_grid">
+              <label class="form_field">
+                <span class="form_label">Délai min (s)</span>
+                <input class="form_input" type="number" min="0" step="1" data-setting="delayMin">
+              </label>
+              <label class="form_field">
+                <span class="form_label">Délai max (s)</span>
+                <input class="form_input" type="number" min="0" step="1" data-setting="delayMax">
+              </label>
+              <label class="form_field">
+                <span class="form_label">Délai max de génération (s)</span>
+                <input class="form_input" type="number" min="10" step="10" data-setting="timeout">
+              </label>
+              <label class="form_field">
+                <span class="form_label">Images par prompt (0 = auto)</span>
+                <input class="form_input" type="number" min="0" max="8" step="1" data-setting="expected">
+              </label>
+              <label class="form_field">
+                <span class="form_label">Stabilité en mode auto (s)</span>
+                <input class="form_input" type="number" min="1" step="1" data-setting="stableSeconds">
+              </label>
+              <label class="form_field">
+                <span class="form_label">Nouvelles tentatives</span>
+                <input class="form_input" type="number" min="0" max="5" step="1" data-setting="retries">
+              </label>
+              <label class="form_field is-checkbox is-full">
+                <input type="checkbox" data-setting="autoDownload">
+                <span class="form_label">Télécharger automatiquement les images</span>
+              </label>
+              <label class="form_field is-full">
+                <span class="form_label">Dossier (dans Téléchargements)</span>
+                <input class="form_input" type="text" data-setting="folder" placeholder="Flow/Mon-projet">
+              </label>
+              <label class="form_field is-full">
+                <span class="form_label">Sélecteur CSS du champ (avancé)</span>
+                <input class="form_input" type="text" data-setting="fieldSelector" placeholder="auto">
+              </label>
+              <label class="form_field is-full">
+                <span class="form_label">Sélecteur CSS du bouton (avancé)</span>
+                <input class="form_input" type="text" data-setting="buttonSelector" placeholder="auto">
+              </label>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- Journal -->
+      <section class="section_logs">
+        <div class="padding-global padding-section-small">
+          <div class="queue_header">
+            <h2 class="heading-style-h6">Journal</h2>
+            <button id="btn-clear-logs" class="button is-text">Effacer</button>
+          </div>
+          <ul id="logs" class="logs_list"></ul>
+        </div>
+      </section>
+
+    </main>
+  </div>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

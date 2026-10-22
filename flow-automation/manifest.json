@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Flow Automation – Prompts d'images",
+  "version": "1.0.0",
+  "description": "File d'attente de prompts d'images envoyés automatiquement à Google Flow, avec téléchargement des résultats.",
+  "permissions": ["sidePanel", "storage", "downloads", "tabs", "scripting"],
+  "host_permissions": ["https://labs.google/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
+  },
+  "action": {
+    "default_title": "Flow Automation",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://labs.google/fx/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
